@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>年金シミュレーター（令和8年度基準）</title>
+    <title>それいけ年金君シミュレーター（令和8年度基準）</title>
     <style>
         :root {
             --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #EEF2FF;
@@ -108,7 +108,11 @@
         .btn-primary:hover::after { left: 100%; }
         .btn-clear { padding: 12px 24px; font-size: 0.95em; font-weight: 700; color: var(--error); background: white; border: 2px solid var(--error); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
         .btn-clear:hover { background: var(--error); color: white; }
-        .btn-row { display: flex; gap: 12px; align-items: center; }
+        .btn-save { padding: 12px 18px; font-size: 0.95em; font-weight: 700; color: #059669; background: white; border: 2px solid #059669; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+        .btn-save:hover { background: #059669; color: white; }
+        .btn-load { padding: 12px 18px; font-size: 0.95em; font-weight: 700; color: #2563EB; background: white; border: 2px solid #2563EB; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+        .btn-load:hover { background: #2563EB; color: white; }
+        .btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .retirement-list { display: flex; flex-direction: column; gap: 6px; }
         .retirement-row { display: flex; align-items: center; gap: 6px; }
         .retirement-row .row-num { font-size: 0.82em; color: var(--gray-400); min-width: 18px; text-align: right; }
@@ -384,9 +388,9 @@
                     <div class="form-group">
                         <label>生年月日</label>
                         <div class="date-inputs">
-                            <input type="number" id="birthYear" placeholder="年" value="1973"><span>年</span>
-                            <input type="number" id="birthMonth" placeholder="月" value="7"><span>月</span>
-                            <input type="number" id="birthDay" placeholder="日" value="13"><span>日</span>
+                            <input type="number" id="birthYear" placeholder="年" value="1975"><span>年</span>
+                            <input type="number" id="birthMonth" placeholder="月" value="10"><span>月</span>
+                            <input type="number" id="birthDay" placeholder="日" value="15"><span>日</span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -395,10 +399,10 @@
                         </label>
                         <div class="retirement-list" id="retirementList1">
                             <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2027"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2029"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2031"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="7"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2028"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2030"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2035"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
                         </div>
                         <button class="add-retirement-btn" onclick="addRetRow('retirementList1')">＋ 退職シナリオを追加</button>
                         <input type="hidden" id="retirementDates">
@@ -413,21 +417,21 @@
                             <label>老齢基礎年金
                                 <span class="tooltip" data-tip="定期便2ページ目「老齢基礎年金」欄の金額（年額）">?</span>
                             </label>
-                            <input type="number" id="tb_npBase" value="831700">
+                            <input type="number" id="tb_npBase" value="816000">
                             <div class="hint">定期便2ページ目「老齢基礎年金」欄</div>
                         </div>
                         <div class="tb-group">
                             <label>厚生年金 報酬比例部分
                                 <span class="tooltip" data-tip="定期便2ページ目「報酬比例部分」欄の金額（年額）。再評価済みの公式値です。">?</span>
                             </label>
-                            <input type="number" id="tb_epBase" value="1900722">
+                            <input type="number" id="tb_epBase" value="1100000">
                             <div class="hint">定期便2ページ目「報酬比例部分」欄</div>
                         </div>
                         <div class="tb-group">
                             <label>経過的加算
                                 <span class="tooltip" data-tip="定額部分と基礎年金の差額を補う加算。定期便2ページ目に記載。">?</span>
                             </label>
-                            <input type="number" id="tb_transBase" value="608">
+                            <input type="number" id="tb_transBase" value="500">
                             <div class="hint">定期便2ページ目「経過的加算部分」欄</div>
                         </div>
                     </div>
@@ -435,24 +439,24 @@
                     <div class="tb-grid">
                         <div class="tb-group">
                             <label>厚生年金 加入月数</label>
-                            <input type="number" id="tb_epMonths" value="372">
+                            <input type="number" id="tb_epMonths" value="333">
                             <div class="hint">定期便2ページ目「厚生年金保険」欄の合計</div>
                         </div>
                         <div class="tb-group">
                             <label>国民年金 加入月数</label>
-                            <input type="number" id="tb_npMonths" value="9">
+                            <input type="number" id="tb_npMonths" value="30">
                             <div class="hint">定期便2ページ目「国民年金　計」欄</div>
                         </div>
                         <div class="tb-group">
                             <label>現在の標準報酬月額（千円）
                                 <span class="tooltip" data-tip="定期便1ページ目 月別状況の「標準報酬月額」欄。千円単位で入力。例: 650千円=65万円">?</span>
                             </label>
-                            <input type="number" id="tb_salary" value="650">
+                            <input type="number" id="tb_salary" value="500">
                             <div class="hint">定期便1ページ目「標準報酬月額」欄</div>
                         </div>
                         <div class="tb-group">
                             <label>直近1年の標準賞与 合計（千円）</label>
-                            <input type="number" id="tb_bonus" value="2685">
+                            <input type="number" id="tb_bonus" value="2000">
                             <div class="hint">定期便1ページ月別状況の「標準賞与額」を合算</div>
                         </div>
                     </div>
@@ -462,13 +466,13 @@
                             <label>記録が反映されている最終年月</label>
                             <div class="date-inputs">
                                 <input type="number" id="tb_dataYear" value="2025" style="width:80px"><span>年</span>
-                                <input type="number" id="tb_dataMonth" value="3" style="width:60px"><span>月</span>
+                                <input type="number" id="tb_dataMonth" value="12" style="width:60px"><span>月</span>
                             </div>
                             <div class="hint">定期便1ページ目の月別状況の最終行</div>
                         </div>
                         <div class="tb-group">
                             <label>保険料累計（本人負担・任意）</label>
-                            <input type="number" id="tb_totalPaid" value="20913396">
+                            <input type="number" id="tb_totalPaid" value="15300000">
                             <div class="hint">定期便1ページ目「(1)と(2)の合計」欄</div>
                         </div>
                     </div>
@@ -484,19 +488,19 @@
                     <div class="form-group">
                         <label>生年月日</label>
                         <div class="date-inputs">
-                            <input type="number" id="birthYear2" placeholder="年" value="1973"><span>年</span>
-                            <input type="number" id="birthMonth2" placeholder="月" value="7"><span>月</span>
-                            <input type="number" id="birthDay2" placeholder="日" value="13"><span>日</span>
+                            <input type="number" id="birthYear2" placeholder="年" value="1975"><span>年</span>
+                            <input type="number" id="birthMonth2" placeholder="月" value="10"><span>月</span>
+                            <input type="number" id="birthDay2" placeholder="日" value="15"><span>日</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>退職年月（最大10個）</label>
                         <div class="retirement-list" id="retirementList2">
                             <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2027"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2029"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2031"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="7"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2028"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2030"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2035"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
                         </div>
                         <button class="add-retirement-btn" onclick="addRetRow('retirementList2')">＋ 退職シナリオを追加</button>
                         <input type="hidden" id="retirementDates2">
@@ -519,6 +523,8 @@
 
         <div class="btn-row">
             <button class="btn-primary" style="flex:1" onclick="calculate()">🧮 年金を計算する</button>
+            <button class="btn-save" onclick="saveData()">💾 保存</button>
+            <button class="btn-load" onclick="loadData()">📂 読込</button>
             <button class="btn-clear" onclick="allClear()">🗑️ オールクリア</button>
         </div>
 
@@ -672,6 +678,122 @@ let salaryData = [];
 let lastMatrixData = null;
 let cumulativeChart = null;
 let currentMode = 'teikibin';
+
+// ===========================
+// データ保存・読込
+// ===========================
+function saveData() {
+    const data = {
+        version: '1.0',
+        savedAt: new Date().toISOString(),
+        mode: currentMode,
+        teikibin: {
+            birthYear: document.getElementById('birthYear').value,
+            birthMonth: document.getElementById('birthMonth').value,
+            birthDay: document.getElementById('birthDay').value,
+            tb_npBase: document.getElementById('tb_npBase').value,
+            tb_epBase: document.getElementById('tb_epBase').value,
+            tb_transBase: document.getElementById('tb_transBase').value,
+            tb_epMonths: document.getElementById('tb_epMonths').value,
+            tb_npMonths: document.getElementById('tb_npMonths').value,
+            tb_salary: document.getElementById('tb_salary').value,
+            tb_bonus: document.getElementById('tb_bonus').value,
+            tb_dataYear: document.getElementById('tb_dataYear').value,
+            tb_dataMonth: document.getElementById('tb_dataMonth').value,
+            tb_totalPaid: document.getElementById('tb_totalPaid').value,
+            retirementDates: getRetirementDatesFromList('retirementList1')
+        },
+        excel: {
+            birthYear2: document.getElementById('birthYear2').value,
+            birthMonth2: document.getElementById('birthMonth2').value,
+            birthDay2: document.getElementById('birthDay2').value,
+            retirementDates: getRetirementDatesFromList('retirementList2'),
+            salaryData: salaryData
+        }
+    };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const by = data.teikibin.birthYear || 'data';
+    const bm = (data.teikibin.birthMonth || '').toString().padStart(2, '0');
+    const bd = (data.teikibin.birthDay || '').toString().padStart(2, '0');
+    a.download = `pension_${by}${bm}${bd}_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showMessage('💾 データを保存しました', 'success');
+}
+
+function loadData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!data.version) throw new Error('無効なファイル形式です');
+
+                // ねんきん定期便データの復元
+                const tb = data.teikibin;
+                if (tb) {
+                    const tbFields = ['birthYear','birthMonth','birthDay','tb_npBase','tb_epBase','tb_transBase','tb_epMonths','tb_npMonths','tb_salary','tb_bonus','tb_dataYear','tb_dataMonth','tb_totalPaid'];
+                    tbFields.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el && tb[id] !== undefined && tb[id] !== '') el.value = tb[id];
+                    });
+                    if (tb.retirementDates && tb.retirementDates.length > 0) {
+                        setRetirementDates('retirementList1', tb.retirementDates);
+                    }
+                }
+
+                // Excelモードデータの復元
+                const ex = data.excel;
+                if (ex) {
+                    ['birthYear2','birthMonth2','birthDay2'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el && ex[id] !== undefined && ex[id] !== '') el.value = ex[id];
+                    });
+                    if (ex.retirementDates && ex.retirementDates.length > 0) {
+                        setRetirementDates('retirementList2', ex.retirementDates);
+                    }
+                    if (ex.salaryData && ex.salaryData.length > 0) {
+                        salaryData = ex.salaryData;
+                        document.getElementById('fileStatus').textContent = `✅ ${salaryData.length}行の給与データを復元`;
+                    }
+                }
+
+                // 保存時のモードに切替
+                if (data.mode) switchMode(data.mode);
+
+                const savedDate = data.savedAt ? new Date(data.savedAt).toLocaleString('ja-JP') : '';
+                showMessage(`📂 データを読み込みました${savedDate ? '（保存日時: ' + savedDate + '）' : ''}`, 'success');
+            } catch (err) {
+                showMessage('❌ ファイルの読み込みに失敗しました: ' + err.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function setRetirementDates(listId, dates) {
+    const list = document.getElementById(listId);
+    if (!list || !dates.length) return;
+    list.innerHTML = '';
+    dates.forEach((d, i) => {
+        const row = document.createElement('div');
+        row.className = 'retirement-row';
+        row.innerHTML = `<span class="row-num">${i + 1}</span><input type="number" placeholder="年" value="${d.year}"><span>年</span><input type="number" placeholder="月" value="${d.month}"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
+        list.appendChild(row);
+    });
+}
 
 function allClear() {
     if (!confirm('すべての入力値をクリアしますか？')) return;
