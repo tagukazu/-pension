@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年金シミュレーター（令和8年度基準）</title>
+    <style>
+        :root {
+            --primary: #4F46E5; --primary-dark: #3730A3; --primary-light: #EEF2FF;
+            --accent: #7C3AED; --accent-light: #F5F3FF;
+            --success: #059669; --success-bg: #D1FAE5;
+            --warning: #D97706; --warning-bg: #FEF3C7;
+            --error: #DC2626; --error-bg: #FEE2E2;
+            --info: #0284C7; --info-bg: #E0F2FE;
+            --gray-50: #F8FAFC; --gray-100: #F1F5F9; --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1; --gray-400: #94A3B8; --gray-500: #64748B;
+            --gray-600: #475569; --gray-700: #334155; --gray-800: #1E293B;
+            --radius: 12px; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 70%, #581c87 100%); min-height: 100vh; color: var(--gray-800); line-height: 1.6; }
+        .container { max-width: 1440px; margin: 0 auto; background: white; border-radius: 20px; padding: 0; box-shadow: var(--shadow-xl); overflow: hidden; }
+
+        /* Header */
+        .app-header { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--accent) 50%, #9333ea 100%); color: white; padding: 36px 44px; position: relative; overflow: hidden; }
+        .app-header::before { content: ''; position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%); pointer-events: none; }
+        .app-header h1 { margin: 0 0 6px; font-size: 1.9em; font-weight: 800; letter-spacing: -0.03em; position: relative; z-index: 1; }
+        .app-header .subtitle { opacity: 0.9; font-size: 0.95em; position: relative; z-index: 1; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); padding: 3px 12px; border-radius: 20px; font-size: 0.75em; margin-left: 10px; vertical-align: middle; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); }
+        .header-meta { display: flex; gap: 16px; margin-top: 12px; font-size: 0.82em; opacity: 0.8; position: relative; z-index: 1; }
+        .header-meta span { display: flex; align-items: center; gap: 4px; }
+
+        .content { padding: 36px 44px; }
+
+        /* Fiscal Year Toggle */
+        .fy-toggle { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: var(--info-bg); border: 1px solid #BAE6FD; border-radius: var(--radius); }
+        .fy-toggle label { font-weight: 700; color: var(--info); font-size: 0.92em; white-space: nowrap; }
+        .fy-toggle select { padding: 6px 12px; border: 1.5px solid #7DD3FC; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--info); background: white; cursor: pointer; }
+        .fy-toggle .fy-note { font-size: 0.82em; color: #0369A1; }
+
+        /* Disclaimer */
+        .disclaimer { background: var(--warning-bg); border: 1px solid #FDE68A; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 28px; font-size: 0.88em; color: #92400E; }
+        .disclaimer summary { font-weight: 700; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+        .disclaimer summary::before { content: '⚠️'; }
+        .disclaimer summary::-webkit-details-marker { display: none; }
+        .disclaimer ul { margin: 10px 0 0; padding-left: 20px; }
+        .disclaimer li { margin-bottom: 4px; }
+        .disclaimer .source-links { margin-top: 10px; padding-top: 8px; border-top: 1px solid #FDE68A; font-size: 0.92em; }
+        .disclaimer .source-links a { color: #92400E; font-weight: 600; }
+
+        /* Form Grid */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
+
+        /* Cards */
+        .card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 24px; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: var(--shadow); }
+        .card-title { font-size: 1.05em; font-weight: 700; color: var(--gray-800); margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { display: flex; align-items: center; gap: 4px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; font-size: 0.88em; }
+        .date-inputs { display: flex; align-items: center; gap: 6px; }
+        .date-inputs input[placeholder="年"] { width: 100px; text-align: center; }
+        .date-inputs input[placeholder="月"], .date-inputs input[placeholder="日"] { width: 72px; text-align: center; }
+        .date-inputs input { text-align: center; }
+        .date-inputs span { color: var(--gray-500); font-size: 0.9em; }
+        input, select { padding: 10px 14px; border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 15px; transition: border-color 0.2s, box-shadow 0.2s; background: white; width: 100%; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+
+        /* Tooltip */
+        .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: var(--gray-300); color: white; border-radius: 50%; font-size: 11px; font-weight: 700; cursor: help; flex-shrink: 0; }
+        .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 400; white-space: nowrap; max-width: 300px; white-space: normal; z-index: 100; box-shadow: var(--shadow); line-height: 1.4; }
+        .tooltip:hover::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--gray-800); z-index: 100; }
+
+        /* Mode Toggle */
+        .mode-toggle { display: flex; gap: 0; margin-bottom: 24px; border-radius: 10px; overflow: hidden; border: 2px solid var(--primary); }
+        .mode-btn { flex: 1; padding: 14px 16px; text-align: center; cursor: pointer; font-weight: 700; font-size: 0.95em; transition: all 0.25s ease; background: white; color: var(--primary); border: none; }
+        .mode-btn.active { background: var(--primary); color: white; }
+        .mode-btn:hover:not(.active) { background: var(--primary-light); }
+        .mode-section { display: none; }
+        .mode-section.active { display: block; }
+
+        /* Teikibin Form */
+        .tb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .tb-grid { grid-template-columns: 1fr; } }
+        .tb-group { margin-bottom: 12px; }
+        .tb-group label { display: flex; align-items: center; gap: 4px; font-weight: 600; color: var(--gray-600); margin-bottom: 4px; font-size: 0.85em; }
+        .tb-group .hint { font-size: 0.78em; color: var(--gray-400); margin-top: 2px; }
+        .tb-group input { padding: 8px 12px; font-size: 14px; }
+        .tb-section-title { font-size: 0.92em; font-weight: 700; color: var(--primary-dark); margin: 16px 0 8px; padding: 6px 10px; background: var(--primary-light); border-radius: 6px; }
+        .tb-section-title:first-child { margin-top: 0; }
+        .tb-prefilled { background: var(--success-bg); border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 14px; font-size: 0.85em; color: #065F46; margin-bottom: 14px; }
+
+        /* File Upload */
+        .file-upload { border: 2px dashed var(--primary); border-radius: 10px; padding: 28px 20px; text-align: center; background: var(--primary-light); cursor: pointer; transition: all 0.3s; }
+        .file-upload:hover { background: #E0E7FF; border-color: var(--primary-dark); transform: translateY(-1px); }
+        .file-upload p { margin: 0; color: var(--primary); font-weight: 600; }
+        .file-upload .sub { color: var(--gray-500); font-size: 0.85em; margin-top: 4px; }
+        #fileStatus { margin-top: 8px; font-size: 0.9em; color: var(--success); font-weight: 600; }
+
+        /* Primary Button */
+        .btn-primary { width: 100%; padding: 16px; font-size: 1.1em; font-weight: 700; color: white; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border: none; border-radius: var(--radius); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; letter-spacing: 0.02em; position: relative; overflow: hidden; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.35); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary::after { content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transition: left 0.5s; }
+        .btn-primary:hover::after { left: 100%; }
+        .btn-clear { padding: 12px 24px; font-size: 0.95em; font-weight: 700; color: var(--error); background: white; border: 2px solid var(--error); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+        .btn-clear:hover { background: var(--error); color: white; }
+        .btn-row { display: flex; gap: 12px; align-items: center; }
+        .retirement-list { display: flex; flex-direction: column; gap: 6px; }
+        .retirement-row { display: flex; align-items: center; gap: 6px; }
+        .retirement-row .row-num { font-size: 0.82em; color: var(--gray-400); min-width: 18px; text-align: right; }
+        .retirement-row input[type="number"] { width: 100px; text-align: center; }
+        .retirement-row input[type="number"]:nth-of-type(2) { width: 72px; }
+        .retirement-row span { color: var(--gray-500); font-size: 0.9em; }
+        .retirement-row .remove-btn { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 1.1em; padding: 2px 6px; border-radius: 4px; width: auto; }
+        .retirement-row .remove-btn:hover { color: var(--error); background: var(--error-bg); }
+        .add-retirement-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; font-size: 0.85em; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px dashed var(--primary); border-radius: 8px; cursor: pointer; transition: all 0.15s; width: auto; margin-top: 4px; }
+        .add-retirement-btn:hover { background: #DBEAFE; }
+        /* Messages */
+        .message { padding: 12px 16px; border-radius: 8px; margin: 16px 0; font-weight: 600; font-size: 0.92em; animation: fadeIn 0.3s ease; }
+        .message.loading { color: var(--primary-dark); background: var(--primary-light); }
+        .message.error { color: var(--error); background: var(--error-bg); }
+        .message.success { color: var(--success); background: var(--success-bg); }
+
+        /* Results */
+        .results-section { margin-top: 32px; }
+        .results-section.hidden { display: none; }
+        .section-title { font-size: 1.3em; font-weight: 700; color: var(--gray-800); margin: 0 0 6px; }
+        .section-desc { color: var(--gray-500); font-size: 0.9em; margin: 0 0 16px; }
+
+        /* Summary Cards */
+        .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .summary-card { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border-radius: var(--radius); padding: 20px; text-align: center; }
+        .summary-card.alt { background: linear-gradient(135deg, #059669 0%, #14b8a6 100%); }
+        .summary-card.warn { background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); }
+        .summary-card .sc-label { font-size: 0.82em; opacity: 0.9; margin-bottom: 6px; font-weight: 600; }
+        .summary-card .sc-value { font-size: 1.6em; font-weight: 800; letter-spacing: -0.02em; }
+        .summary-card .sc-sub { font-size: 0.78em; opacity: 0.8; margin-top: 4px; }
+
+        /* Matrix */
+        .matrix-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--gray-200); margin-bottom: 12px; }
+        .matrix-table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 0.92em; }
+        .matrix-table th, .matrix-table td { border: 1px solid var(--gray-200); padding: 10px 12px; text-align: center; }
+        .matrix-table thead th { background: var(--gray-800); color: white; font-weight: 600; position: sticky; top: 0; z-index: 2; }
+        .matrix-table thead th:first-child { z-index: 3; left: 0; }
+        .matrix-table td:first-child, .matrix-table th:first-child { position: sticky; left: 0; z-index: 1; background: var(--gray-100); font-weight: 700; color: var(--gray-700); min-width: 120px; }
+        .matrix-table thead th .rate-label { font-weight: 400; opacity: 0.8; font-size: 0.82em; display: block; }
+        /* col-65 removed: 65歳列は選択時のみハイライト */
+        .matrix-table tbody tr:hover td:first-child { background: #DBEAFE; }
+        .matrix-table td.cell { cursor: pointer; transition: all 0.15s; position: relative; }
+        .matrix-table td.cell:hover { outline: 2px solid var(--primary); outline-offset: -2px; z-index: 1; }
+        .matrix-table td.cell.selected { outline: 3px solid var(--primary); outline-offset: -3px; z-index: 5; background: var(--primary-light) !important; font-weight: 800; }
+        .matrix-table td.cell.cross-row { background: #EEF2FF !important; }
+        .matrix-table td.cell.cross-col { background: #EEF2FF !important; }
+        .matrix-table td.first-col-highlight { background: #DBEAFE !important; font-weight: 800; color: var(--primary-dark) !important; }
+        .matrix-table th.col-highlight { background: var(--primary) !important; color: white; box-shadow: inset 0 -3px 0 rgba(255,255,255,0.3); }
+        .cell .monthly { font-weight: 700; font-size: 1.05em; }
+        .cell .annual { font-size: 0.82em; color: var(--gray-500); margin-top: 2px; }
+        .cell .rate-diff { font-size: 0.75em; margin-top: 1px; }
+        .cell .rate-diff.plus { color: var(--success); }
+        .cell .rate-diff.minus { color: var(--error); }
+        .matrix-table .error-msg { color: var(--gray-400); font-style: italic; }
+
+        /* Detail Panel */
+        .detail-panel { background: var(--primary-light); border: 2px solid var(--primary); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 28px; display: none; }
+        .detail-panel.visible { display: block; animation: fadeIn 0.2s ease; }
+        .detail-panel h4 { margin: 0 0 12px; color: var(--primary-dark); font-size: 1.1em; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+        .detail-item { display: flex; justify-content: space-between; padding: 8px 12px; background: white; border-radius: 6px; font-size: 0.92em; }
+        .detail-item .label { color: var(--gray-600); }
+        .detail-item .value { font-weight: 700; color: var(--gray-800); }
+        .detail-item.highlight { background: var(--primary); color: white; }
+        .detail-item.highlight .label, .detail-item.highlight .value { color: white; }
+        .detail-item.success { background: var(--success); color: white; }
+        .detail-item.success .label, .detail-item.success .value { color: white; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); flex-wrap: wrap; }
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--gray-500); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-size: 0.95em; }
+        .tab:hover { color: var(--gray-700); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Analysis */
+        .analysis-grid { display: grid; gap: 20px; }
+        .analysis-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+        .analysis-card-header { background: var(--gray-800); color: white; padding: 12px 20px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .analysis-card-body { padding: 16px 20px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200); font-size: 0.92em; gap: 12px; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row .label { color: var(--gray-600); white-space: nowrap; }
+        .stat-row .value { font-weight: 700; text-align: right; }
+        .stat-row.total { background: var(--primary-light); margin: 0 -20px; padding: 10px 20px; border-radius: 0; }
+        .stat-row.total .label, .stat-row.total .value { color: var(--primary-dark); font-weight: 700; }
+
+        /* Breakeven */
+        .breakeven-table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
+        .breakeven-table th, .breakeven-table td { padding: 10px 16px; border: 1px solid var(--gray-200); text-align: center; }
+        .breakeven-table th { background: var(--gray-100); font-weight: 600; color: var(--gray-700); }
+        .breakeven-table .age { font-weight: 700; font-size: 1.1em; color: var(--primary); }
+        .breakeven-table .note { font-size: 0.85em; color: var(--gray-500); }
+        .breakeven-table .favorable { background: var(--success-bg); color: #065F46; font-weight: 600; }
+        .breakeven-table .unfavorable { background: var(--error-bg); color: #991B1B; font-weight: 600; }
+
+        /* Chart */
+        .chart-container { position: relative; height: 420px; width: 100%; margin: 20px 0; }
+        .chart-scenario-select { margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .chart-scenario-select label { font-weight: 600; white-space: nowrap; }
+        .chart-scenario-select select { width: auto; padding: 8px 16px; }
+        .age-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border: 1.5px solid var(--gray-300); border-radius: 20px; font-size: 0.85em; font-weight: 600; cursor: pointer; transition: all 0.15s; user-select: none; background: white; color: var(--gray-600); }
+        .age-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .age-chip.checked { background: var(--primary); border-color: var(--primary); color: white; }
+        .age-chip input { display: none; }
+
+        /* Life Expectancy Markers */
+        .life-expect-info { display: flex; gap: 16px; margin-top: 12px; padding: 12px 16px; background: var(--gray-50); border-radius: 8px; font-size: 0.85em; flex-wrap: wrap; }
+        .life-expect-info .marker { display: flex; align-items: center; gap: 6px; }
+        .life-expect-info .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Net Pension Section */
+        .net-pension-section { margin-top: 20px; padding: 20px; background: var(--accent-light); border: 1px solid #DDD6FE; border-radius: var(--radius); }
+        .net-pension-section h4 { margin: 0 0 12px; color: var(--accent); }
+        .net-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .net-item { background: white; padding: 12px; border-radius: 8px; text-align: center; }
+        .net-item .ni-label { font-size: 0.82em; color: var(--gray-500); margin-bottom: 4px; }
+        .net-item .ni-value { font-size: 1.2em; font-weight: 700; color: var(--gray-800); }
+        .net-item .ni-sub { font-size: 0.78em; color: var(--gray-400); margin-top: 2px; }
+
+        /* Analysis Selector */
+        .analysis-selector { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; }
+        .analysis-selector-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+        .analysis-selector-row:last-child { margin-bottom: 0; }
+        .analysis-selector-row label { font-weight: 700; font-size: 0.9em; color: var(--gray-700); white-space: nowrap; min-width: 160px; }
+        .analysis-selector-row select { width: auto; padding: 8px 14px; font-size: 14px; }
+        .analysis-age-picks { display: flex; gap: 8px; flex-wrap: wrap; }
+        .analysis-age-picks select { min-width: 100px; }
+        .analysis-age-picks-ym { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .age-ym-pick { display: flex; align-items: center; gap: 6px; background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-200); transition: border-color 0.2s; }
+        .age-ym-pick:hover { border-color: var(--primary); }
+        .age-ym-pick:nth-child(1) { border-left: 4px solid #3B82F6; }
+        .age-ym-pick:nth-child(2) { border-left: 4px solid #059669; }
+        .age-ym-pick:nth-child(3) { border-left: 4px solid #D97706; }
+        .age-ym-pick .age-ym-num { font-weight: 800; font-size: 0.88em; min-width: 18px; }
+        .age-ym-pick input[type="number"] { width: 72px; text-align: center; padding: 7px 4px; font-size: 14px; }
+        .age-ym-pick input[type="number"].ym-year { width: 88px; }
+        .age-ym-pick > span { color: var(--gray-500); font-size: 0.88em; white-space: nowrap; }
+        .age-ym-disp { font-size: 0.85em; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px; white-space: nowrap; margin-left: 4px; }
+        .np-payment-alert { background: linear-gradient(135deg, #FEF3C7, #FDE68A); border: 1.5px solid #F59E0B; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; }
+        .np-payment-alert .np-title { font-weight: 700; color: #92400E; font-size: 0.95em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .np-payment-alert .np-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+        .np-payment-alert .np-item { background: rgba(255,255,255,0.7); padding: 10px 12px; border-radius: 8px; text-align: center; }
+        .np-payment-alert .np-item .np-label { font-size: 0.78em; color: #92400E; margin-bottom: 2px; }
+        .np-payment-alert .np-item .np-value { font-size: 1.05em; font-weight: 700; color: #78350F; }
+        .chart-mode-toggle { display: inline-flex; border: 2px solid var(--primary); border-radius: 8px; overflow: hidden; margin-left: 12px; vertical-align: middle; }
+        .cmt-btn { padding: 6px 16px; font-size: 0.85em; font-weight: 700; cursor: pointer; border: none; background: white; color: var(--primary); transition: all 0.2s; }
+        .cmt-btn.active { background: var(--primary); color: white; }
+        .cmt-btn:hover:not(.active) { background: var(--primary-light); }
+        .chart-options-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+        .chart-option-label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85em; font-weight: 600; color: var(--gray-600); cursor: pointer; }
+        .chart-option-label input[type="checkbox"] { accent-color: var(--primary); }
+        .compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+        .compare-col { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+        .compare-col.best { border-color: var(--success); border-width: 2px; }
+        .compare-col-header { padding: 14px 16px; font-weight: 700; font-size: 1em; text-align: center; color: white; }
+        .compare-col-header .ch-sub { font-size: 0.78em; font-weight: 400; opacity: 0.85; margin-top: 2px; }
+        .compare-col-body { padding: 14px 16px; }
+        .compare-col-body .ci-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--gray-100); font-size: 0.85em; }
+        .compare-col-body .ci-row:last-child { border-bottom: none; }
+        .compare-col-body .ci-row .ci-label { color: var(--gray-500); }
+        .compare-col-body .ci-row .ci-value { font-weight: 700; color: var(--gray-800); text-align: right; }
+        .compare-col-body .ci-section { font-size: 0.78em; font-weight: 700; color: var(--primary-dark); margin: 8px 0 4px; padding: 4px 8px; background: var(--primary-light); border-radius: 4px; }
+        .compare-col-body .ci-highlight { background: var(--success-bg); margin: 0 -16px; padding: 8px 16px; }
+        .compare-col-body .ci-highlight .ci-label, .compare-col-body .ci-highlight .ci-value { color: #065F46; font-weight: 700; }
+        .compare-best-badge { display: inline-block; background: var(--success); color: white; font-size: 0.72em; padding: 1px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+
+        /* Deduction Breakdown */
+        .deduction-wrap { margin: 0 -20px; border-top: 1px solid var(--gray-200); }
+        .deduction-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; cursor: pointer; background: var(--gray-50); user-select: none; transition: background 0.15s; }
+        .deduction-header:hover { background: var(--gray-100); }
+        .deduction-header .dh-title { font-size: 0.88em; font-weight: 700; color: var(--gray-700); display: flex; align-items: center; gap: 6px; }
+        .deduction-header .dh-summary { font-size: 0.85em; color: var(--gray-500); }
+        .deduction-header .dh-arrow { transition: transform 0.2s; font-size: 0.8em; color: var(--gray-400); }
+        .deduction-header.open .dh-arrow { transform: rotate(180deg); }
+        .deduction-body { display: none; padding: 0 20px 16px; }
+        .deduction-body.open { display: block; animation: fadeIn 0.2s ease; }
+        .deduction-flow { display: flex; flex-direction: column; gap: 0; }
+        .deduction-step { display: flex; align-items: center; gap: 12px; padding: 7px 0; position: relative; }
+        .deduction-step:not(:last-child) { border-bottom: 1px dashed var(--gray-200); }
+        .deduction-step .ds-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.75em; font-weight: 700; flex-shrink: 0; }
+        .deduction-step .ds-icon.income { background: #DBEAFE; color: #1D4ED8; }
+        .deduction-step .ds-icon.deduct { background: #E0E7FF; color: #4338CA; }
+        .deduction-step .ds-icon.tax { background: #FEE2E2; color: #DC2626; }
+        .deduction-step .ds-icon.ins { background: #FEF3C7; color: #D97706; }
+        .deduction-step .ds-icon.total { background: var(--gray-800); color: white; }
+        .deduction-step .ds-icon.net { background: #D1FAE5; color: #059669; }
+        .deduction-step .ds-info { flex: 1; min-width: 0; }
+        .deduction-step .ds-label { font-size: 0.82em; color: var(--gray-500); }
+        .deduction-step .ds-value { font-size: 0.95em; font-weight: 700; color: var(--gray-800); }
+        .deduction-step .ds-pct { font-size: 0.78em; color: var(--gray-400); margin-left: 4px; }
+        .deduction-step .ds-bar { height: 4px; border-radius: 2px; margin-top: 3px; }
+        .deduction-step.is-total { padding: 10px 0; margin-top: 2px; border-bottom: none; border-top: 2px solid var(--gray-200); }
+        .deduction-note { font-size: 0.76em; color: var(--gray-400); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--gray-100); }
+
+        /* Footer */
+        .app-footer { background: var(--gray-50); border-top: 1px solid var(--gray-200); padding: 20px 44px; font-size: 0.82em; color: var(--gray-500); }
+        .app-footer a { color: var(--primary); text-decoration: none; }
+        .app-footer .footer-grid { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+        .app-footer .footer-links { display: flex; gap: 16px; }
+
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+            .btn-primary, .file-upload, .tabs, .mode-toggle, .fy-toggle { display: none; }
+            .tab-content { display: block !important; page-break-inside: avoid; }
+        }
+        @media (max-width: 640px) {
+            body { padding: 8px; }
+            .content { padding: 20px 16px; }
+            .app-header { padding: 24px 20px; }
+            .app-header h1 { font-size: 1.4em; }
+            .app-footer { padding: 16px 20px; }
+            .summary-bar { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="app-header">
+        <h1>📊 年金シミュレーター <span class="badge" id="fyBadge">令和8年度基準</span></h1>
+        <div class="subtitle">繰上げ・繰下げ受給額を60歳〜75歳の範囲でシミュレーション</div>
+        <div class="header-meta">
+            <span>📅 制度定数: <strong id="fyLabel">2026年度（令和8年度）</strong></span>
+            <span>🔄 在職老齢年金基準: <strong id="inServiceLabel">月65万円</strong></span>
+        </div>
+    </header>
+
+    <div class="content">
+        <!-- Fiscal Year Toggle -->
+        <div class="fy-toggle">
+            <label>📋 基準年度:</label>
+            <select id="fiscalYear" onchange="onFYChange()">
+                <option value="R8" selected>令和8年度（2026年度）</option>
+                <option value="R7">令和7年度（2025年度）</option>
+            </select>
+            <span class="fy-note" id="fyNote">※ 令和8年度（2026年4月〜）の年金額改定・在職老齢年金改正を反映済み</span>
+        </div>
+
+        <details class="disclaimer" open>
+            <summary>ご利用上の注意（必ずお読みください）</summary>
+            <ul>
+                <li><strong id="disclaimerFY">令和8年度（2026年度）</strong>の制度定数に基づくシミュレーションです。</li>
+                <li>繰上げ減額率は<strong>生年月日</strong>で異なります（S37.4.2以降: 0.4%/月、以前: 0.5%/月）。繰下げは<strong>75歳</strong>まで可能（最大84%増）。</li>
+                <li>60〜64歳の繰上げでは基礎年金・厚生年金が同一減額率で同時に繰り上げされます。繰下げは別々の年齢も可能ですが、本ツールでは同時繰下げで試算します。</li>
+                <li><strong>在職老齢年金</strong>（<span id="disclaimerThreshold">令和8年度基準: 月65万円</span>）・加給年金・振替加算は含まれません。正確な金額は<a href="https://www.nenkin.go.jp/" target="_blank" rel="noopener">日本年金機構</a>にご確認ください。</li>
+                <li>手取り概算は<strong>参考値</strong>です。実際の税額・社会保険料は個人の状況で異なります。</li>
+            </ul>
+            <div class="source-links">
+                📎 参考: <a href="https://www.mhlw.go.jp/stf/houdou/0000191631_00019.html" target="_blank">厚労省・令和7年度年金額改定</a> ｜
+                <a href="https://www.mhlw.go.jp/content/12502000/001639615.pdf" target="_blank">厚労省・令和8年度年金額改定</a> ｜
+                <a href="https://www.nenkin.go.jp/" target="_blank">日本年金機構</a>
+            </div>
+        </details>
+
+        <div id="messageArea"></div>
+
+        <!-- Data Input Mode Toggle -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="switchMode('teikibin')">📋 ねんきん定期便から入力（推奨）</button>
+            <button class="mode-btn" onclick="switchMode('excel')">📁 Excelファイルから計算</button>
+        </div>
+
+        <!-- Mode: ねんきん定期便 -->
+        <div id="mode-teikibin" class="mode-section active">
+            <div class="form-grid">
+                <div class="card">
+                    <div class="card-title">👤 基本情報</div>
+                    <div class="form-group">
+                        <label>生年月日</label>
+                        <div class="date-inputs">
+                            <input type="number" id="birthYear" placeholder="年" value="1973"><span>年</span>
+                            <input type="number" id="birthMonth" placeholder="月" value="7"><span>月</span>
+                            <input type="number" id="birthDay" placeholder="日" value="13"><span>日</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>退職年月（最大10個）
+                            <span class="tooltip" data-tip="複数のシナリオを比較できます。例: 2026年3月=来年退職、2033年7月=60歳退職">?</span>
+                        </label>
+                        <div class="retirement-list" id="retirementList1">
+                            <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2027"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2029"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2031"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="7"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                        </div>
+                        <button class="add-retirement-btn" onclick="addRetRow('retirementList1')">＋ 退職シナリオを追加</button>
+                        <input type="hidden" id="retirementDates">
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📋 ねんきん定期便の年金見込額</div>
+                    <div class="tb-prefilled">✅ ねんきん定期便（令和8年2月28日付）の値がプリセットされています</div>
+                    <div class="tb-section-title">65歳時の年金見込額（年額）</div>
+                    <div class="tb-grid">
+                        <div class="tb-group">
+                            <label>老齢基礎年金
+                                <span class="tooltip" data-tip="定期便2ページ目「老齢基礎年金」欄の金額（年額）">?</span>
+                            </label>
+                            <input type="number" id="tb_npBase" value="831700">
+                            <div class="hint">定期便2ページ目「老齢基礎年金」欄</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>厚生年金 報酬比例部分
+                                <span class="tooltip" data-tip="定期便2ページ目「報酬比例部分」欄の金額（年額）。再評価済みの公式値です。">?</span>
+                            </label>
+                            <input type="number" id="tb_epBase" value="1900722">
+                            <div class="hint">定期便2ページ目「報酬比例部分」欄</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>経過的加算
+                                <span class="tooltip" data-tip="定額部分と基礎年金の差額を補う加算。定期便2ページ目に記載。">?</span>
+                            </label>
+                            <input type="number" id="tb_transBase" value="608">
+                            <div class="hint">定期便2ページ目「経過的加算部分」欄</div>
+                        </div>
+                    </div>
+                    <div class="tb-section-title">加入実績・現在の報酬</div>
+                    <div class="tb-grid">
+                        <div class="tb-group">
+                            <label>厚生年金 加入月数</label>
+                            <input type="number" id="tb_epMonths" value="372">
+                            <div class="hint">定期便2ページ目「厚生年金保険」欄の合計</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>国民年金 加入月数</label>
+                            <input type="number" id="tb_npMonths" value="9">
+                            <div class="hint">定期便2ページ目「国民年金　計」欄</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>現在の標準報酬月額（千円）
+                                <span class="tooltip" data-tip="定期便1ページ目 月別状況の「標準報酬月額」欄。千円単位で入力。例: 650千円=65万円">?</span>
+                            </label>
+                            <input type="number" id="tb_salary" value="650">
+                            <div class="hint">定期便1ページ目「標準報酬月額」欄</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>直近1年の標準賞与 合計（千円）</label>
+                            <input type="number" id="tb_bonus" value="2685">
+                            <div class="hint">定期便1ページ月別状況の「標準賞与額」を合算</div>
+                        </div>
+                    </div>
+                    <div class="tb-section-title">定期便のデータ基準</div>
+                    <div class="tb-grid">
+                        <div class="tb-group">
+                            <label>記録が反映されている最終年月</label>
+                            <div class="date-inputs">
+                                <input type="number" id="tb_dataYear" value="2025" style="width:80px"><span>年</span>
+                                <input type="number" id="tb_dataMonth" value="3" style="width:60px"><span>月</span>
+                            </div>
+                            <div class="hint">定期便1ページ目の月別状況の最終行</div>
+                        </div>
+                        <div class="tb-group">
+                            <label>保険料累計（本人負担・任意）</label>
+                            <input type="number" id="tb_totalPaid" value="20913396">
+                            <div class="hint">定期便1ページ目「(1)と(2)の合計」欄</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode: Excel -->
+        <div id="mode-excel" class="mode-section">
+            <div class="form-grid">
+                <div class="card">
+                    <div class="card-title">👤 基本情報</div>
+                    <div class="form-group">
+                        <label>生年月日</label>
+                        <div class="date-inputs">
+                            <input type="number" id="birthYear2" placeholder="年" value="1973"><span>年</span>
+                            <input type="number" id="birthMonth2" placeholder="月" value="7"><span>月</span>
+                            <input type="number" id="birthDay2" placeholder="日" value="13"><span>日</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>退職年月（最大10個）</label>
+                        <div class="retirement-list" id="retirementList2">
+                            <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2027"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2029"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2031"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="7"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                        </div>
+                        <button class="add-retirement-btn" onclick="addRetRow('retirementList2')">＋ 退職シナリオを追加</button>
+                        <input type="hidden" id="retirementDates2">
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📁 年金記録データ（Excel）</div>
+                    <div class="file-upload" onclick="document.getElementById('salaryFile').click()">
+                        <input type="file" id="salaryFile" accept=".xlsx,.xls" style="display: none;">
+                        <p>📄 クリックしてExcelファイルを選択</p>
+                        <div class="sub">シート名「標準報酬月額」「標準賞与」を含むファイル</div>
+                        <div id="fileStatus"></div>
+                    </div>
+                    <p style="font-size:0.82em; color:var(--gray-500); margin-top:12px;">
+                        ※ Excelモードでは再評価率が適用されないため、ねんきん定期便モードの方が正確です。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" style="flex:1" onclick="calculate()">🧮 年金を計算する</button>
+            <button class="btn-clear" onclick="allClear()">🗑️ オールクリア</button>
+        </div>
+
+        <div id="results" class="results-section hidden">
+            <!-- Summary Bar -->
+            <div id="summaryBar" class="summary-bar"></div>
+
+            <div class="tabs" id="mainTabs">
+                <div class="tab active" data-tab="matrix">📋 受給額マトリックス</div>
+                <div class="tab" data-tab="chart">📈 累積チャート</div>
+                <div class="tab" data-tab="analysis">🔍 詳細分析</div>
+            </div>
+
+            <div class="tab-content active" id="tab-matrix">
+                <h2 class="section-title">繰上げ・繰下げ受給額マトリックス</h2>
+                <p class="section-desc">各退職シナリオごとに受給開始年齢別の年金額（月額/年額）を表示。セルクリックで詳細確認。</p>
+                <div id="detailPanel" class="detail-panel"></div>
+                <div class="matrix-wrap"><div id="matrixContainer"></div></div>
+            </div>
+
+            <div class="tab-content" id="tab-chart">
+                <h2 class="section-title">累積受給額チャート</h2>
+                <p class="section-desc">受給開始年齢ごとの累積額を比較。線の交差点が損益分岐年齢です。</p>
+                <div class="chart-scenario-select">
+                    <label>退職シナリオ:</label>
+                    <select id="chartScenario" onchange="updateChart()"></select>
+                    <div class="chart-mode-toggle" id="chartModeToggle">
+                        <button class="cmt-btn active" data-mode="gross" onclick="setChartMode('gross')">累計受給額</button>
+                        <button class="cmt-btn" data-mode="net" onclick="setChartMode('net')">累計手取り</button>
+                    </div>
+                </div>
+                <div class="chart-scenario-select" style="margin-bottom:8px;">
+                    <label>受給開始年齢:</label>
+                    <div id="chartAgeCheckboxes" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+                <div class="chart-options-row">
+                    <label class="chart-option-label" style="white-space:nowrap;">損益分岐点:</label>
+                    <select id="breakevenA" onchange="updateChart()" style="width:auto;padding:6px 12px;font-size:13px;"><option value="">—</option></select>
+                    <span style="color:var(--gray-500);font-size:0.85em;font-weight:700;">vs</span>
+                    <select id="breakevenB" onchange="updateChart()" style="width:auto;padding:6px 12px;font-size:13px;"><option value="">—</option></select>
+                    <span id="breakevenResult" style="font-size:0.88em;font-weight:700;color:var(--primary);margin-left:8px;"></span>
+                </div>
+                <div class="chart-container"><canvas id="cumulativeChart"></canvas></div>
+                <div class="life-expect-info">
+                    <div class="marker"><div class="dot" style="background:#EF4444"></div> 男性平均寿命: 約81.5歳</div>
+                    <div class="marker"><div class="dot" style="background:#EC4899"></div> 女性平均寿命: 約87.6歳</div>
+                    <div class="marker"><div class="dot" style="background:#8B5CF6"></div> 90歳（長寿リスク対策目安）</div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-analysis">
+                <h2 class="section-title">詳細分析・比較</h2>
+                <p class="section-desc">退職年月と受給開始年月を指定して、最大3パターンを横並びで比較できます。</p>
+                <div class="analysis-selector">
+                    <div class="analysis-selector-row">
+                        <label>退職年月:</label>
+                        <select id="analysisScenario" onchange="populateAnalysisAgeSelectors();updateAnalysis()"></select>
+                    </div>
+                    <div class="analysis-selector-row" style="align-items:flex-start;">
+                        <label style="padding-top:10px;">受給開始年月:</label>
+                        <div class="analysis-age-picks-ym">
+                            <div class="age-ym-pick">
+                                <span class="age-ym-num" style="color:#3B82F6;">①</span>
+                                <input type="number" id="analysisStartY1" class="ym-year" min="2020" max="2060" placeholder="年" onchange="updateAnalysis()"><span>年</span>
+                                <input type="number" id="analysisStartM1" min="1" max="12" placeholder="月" onchange="updateAnalysis()"><span>月</span>
+                                <span class="age-ym-disp" id="analysisAgeDisp1"></span>
+                            </div>
+                            <div class="age-ym-pick">
+                                <span class="age-ym-num" style="color:#059669;">②</span>
+                                <input type="number" id="analysisStartY2" class="ym-year" min="2020" max="2060" placeholder="年" onchange="updateAnalysis()"><span>年</span>
+                                <input type="number" id="analysisStartM2" min="1" max="12" placeholder="月" onchange="updateAnalysis()"><span>月</span>
+                                <span class="age-ym-disp" id="analysisAgeDisp2"></span>
+                            </div>
+                            <div class="age-ym-pick">
+                                <span class="age-ym-num" style="color:#D97706;">③</span>
+                                <input type="number" id="analysisStartY3" class="ym-year" min="2020" max="2060" placeholder="年" onchange="updateAnalysis()"><span>年</span>
+                                <input type="number" id="analysisStartM3" min="1" max="12" placeholder="月" onchange="updateAnalysis()"><span>月</span>
+                                <span class="age-ym-disp" id="analysisAgeDisp3"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="analysisContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <div class="footer-grid">
+            <div>
+                <p><strong>免責事項:</strong> 本ツールの計算結果は概算です。正確な金額は<a href="https://www.nenkin.go.jp/" target="_blank" rel="noopener">日本年金機構</a>にご確認ください。</p>
+                <p id="footerFY">定数基準: 令和8年度（2026年度）｜2022年4月施行 年金制度改正対応済｜2025年改正（在職老齢年金引上げ）対応済</p>
+            </div>
+            <div class="footer-links">
+                <a href="javascript:void(0)" onclick="window.print()">🖨️ 印刷</a>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+<script>
+'use strict';
+
+// ===========================
+// 定数（年度別）
+// ===========================
+const CONSTANTS = {
+    R8: Object.freeze({
+        label: '令和8年度（2026年度）',
+        NP_FULL: 847300, NP_FULL_OLD: 844900, NP_MAX_MONTHS: 480,
+        NP_MONTHLY_PAYMENT: 17920,
+        EP_RATE_SELF: 0.0915,
+        RATE_BEFORE_2003: 7.125 / 1000, RATE_AFTER_2003: 5.481 / 1000,
+        BONUS_CAP: 1500000,
+        TRANS_UNIT: 1766, TRANS_UNIT_OLD: 1761, TRANS_MAX_MONTHS: 480,
+        DECREASE_NEW: 0.004, DECREASE_OLD: 0.005,
+        INCREASE: 0.007,
+        DEFER_MAX_NEW: 75, DEFER_MAX_OLD: 70,
+        IN_SERVICE_THRESHOLD: 650000,
+        STD_AGE: 65,
+        H15_APRIL: new Date(2003, 3, 1),
+        BOUNDARY_DECREASE: new Date(1962, 3, 2),
+        BOUNDARY_DEFER: new Date(1952, 3, 2),
+        BOUNDARY_TRANS_UNIT: new Date(1956, 3, 2)
+    }),
+    R7: Object.freeze({
+        label: '令和7年度（2025年度）',
+        NP_FULL: 831700, NP_FULL_OLD: 829300, NP_MAX_MONTHS: 480,
+        NP_MONTHLY_PAYMENT: 17510,
+        EP_RATE_SELF: 0.0915,
+        RATE_BEFORE_2003: 7.125 / 1000, RATE_AFTER_2003: 5.481 / 1000,
+        BONUS_CAP: 1500000,
+        TRANS_UNIT: 1734, TRANS_UNIT_OLD: 1729, TRANS_MAX_MONTHS: 480,
+        DECREASE_NEW: 0.004, DECREASE_OLD: 0.005,
+        INCREASE: 0.007,
+        DEFER_MAX_NEW: 75, DEFER_MAX_OLD: 70,
+        IN_SERVICE_THRESHOLD: 510000,
+        STD_AGE: 65,
+        H15_APRIL: new Date(2003, 3, 1),
+        BOUNDARY_DECREASE: new Date(1962, 3, 2),
+        BOUNDARY_DEFER: new Date(1952, 3, 2),
+        BOUNDARY_TRANS_UNIT: new Date(1956, 3, 2)
+    })
+};
+
+let C = CONSTANTS.R8;
+let salaryData = [];
+let lastMatrixData = null;
+let cumulativeChart = null;
+let currentMode = 'teikibin';
+
+function allClear() {
+    if (!confirm('すべての入力値をクリアしますか？')) return;
+    ['birthYear','birthMonth','birthDay','tb_npBase','tb_epBase','tb_transBase','tb_epMonths','tb_npMonths','tb_salary','tb_bonus','tb_dataYear','tb_dataMonth','tb_totalPaid','birthYear2','birthMonth2','birthDay2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['retirementDates','retirementDates2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    // 退職年月の個別入力もクリア
+    document.querySelectorAll('.retirement-row input').forEach(el => el.value = '');
+    // 詳細分析の年月入力をクリア
+    for (let n = 1; n <= 3; n++) {
+        const yEl = document.getElementById('analysisStartY' + n);
+        const mEl = document.getElementById('analysisStartM' + n);
+        const dEl = document.getElementById('analysisAgeDisp' + n);
+        if (yEl) yEl.value = '';
+        if (mEl) mEl.value = '';
+        if (dEl) dEl.textContent = '';
+    }
+    // チャートモードをリセット
+    chartMode = 'gross';
+    document.querySelectorAll('#chartModeToggle .cmt-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === 'gross');
+    });
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('messageArea').innerHTML = '';
+    document.getElementById('fileStatus').textContent = '';
+    if (cumulativeChart) { cumulativeChart.destroy(); cumulativeChart = null; }
+    salaryData = []; lastMatrixData = null;
+}
+
+// ===========================
+// 退職年月の行操作
+// ===========================
+function addRetRow(listId) {
+    const list = document.getElementById(listId);
+    if (list.children.length >= 10) { alert('退職シナリオは最大10個です'); return; }
+    const num = list.children.length + 1;
+    const row = document.createElement('div');
+    row.className = 'retirement-row';
+    row.innerHTML = `<span class="row-num">${num}</span><input type="number" placeholder="年"><span>年</span><input type="number" placeholder="月"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
+    list.appendChild(row);
+}
+function removeRetRow(btn) {
+    const list = btn.closest('.retirement-list');
+    if (list.children.length <= 1) return;
+    btn.closest('.retirement-row').remove();
+    renumberRetRows(list);
+}
+function renumberRetRows(list) {
+    Array.from(list.children).forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+}
+function getRetirementDatesFromList(listId) {
+    const list = document.getElementById(listId);
+    const results = [];
+    list.querySelectorAll('.retirement-row').forEach(row => {
+        const inputs = row.querySelectorAll('input[type="number"]');
+        const y = parseInt(inputs[0]?.value), m = parseInt(inputs[1]?.value);
+        if (y > 2000 && m >= 1 && m <= 12) results.push({ year: y, month: m });
+    });
+    return results;
+}
+// 年月リンク: 月が範囲外になったら年を繰り上げ/繰り下げ
+function fixYearMonth(monthInput) {
+    const row = monthInput.closest('.retirement-row') || monthInput.closest('.date-inputs') || monthInput.closest('.age-ym-pick');
+    if (!row) return;
+    const inputs = row.querySelectorAll('input[type="number"]');
+    // 年入力は月入力の直前にあるはず
+    let yearInput = null;
+    for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i] === monthInput && i > 0) { yearInput = inputs[i - 1]; break; }
+    }
+    if (!yearInput) return;
+    let y = parseInt(yearInput.value) || 0;
+    let m = parseInt(monthInput.value);
+    if (isNaN(m)) return;
+    while (m > 12) { m -= 12; y++; }
+    while (m < 1) { m += 12; y--; }
+    yearInput.value = y;
+    monthInput.value = m;
+}
+// イベント委譲で全退職年月の月入力を監視
+document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('change', e => {
+        const el = e.target;
+        if (el.type !== 'number') return;
+        // 退職年月行の月入力（2番目のinput）
+        const row = el.closest('.retirement-row');
+        if (row) {
+            const inputs = row.querySelectorAll('input[type="number"]');
+            if (inputs[1] === el) fixYearMonth(el);
+        }
+        // 詳細分析の受給開始年月の月入力
+        if (el.id && el.id.startsWith('analysisStartM')) fixYearMonth(el);
+    });
+});
+
+// ===========================
+// 年度切替
+// ===========================
+function onFYChange() {
+    const fy = document.getElementById('fiscalYear').value;
+    C = CONSTANTS[fy];
+    const label = C.label;
+    const threshold = (C.IN_SERVICE_THRESHOLD / 10000).toFixed(0);
+    document.getElementById('fyBadge').textContent = fy === 'R8' ? '令和8年度基準' : '令和7年度基準';
+    document.getElementById('fyLabel').textContent = label;
+    document.getElementById('inServiceLabel').textContent = `月${threshold}万円`;
+    document.getElementById('disclaimerFY').textContent = label;
+    document.getElementById('disclaimerThreshold').textContent = `${fy === 'R8' ? '令和8' : '令和7'}年度基準: 月${threshold}万円`;
+    document.getElementById('fyNote').textContent = fy === 'R8'
+        ? '※ 令和8年度（2026年4月〜）の年金額改定・在職老齢年金改正を反映済み'
+        : '※ 令和7年度（2025年4月〜2026年3月）の定数です';
+    document.getElementById('footerFY').textContent = fy === 'R8'
+        ? '定数基準: 令和8年度（2026年度）｜2022年4月施行 年金制度改正対応済｜2025年改正（在職老齢年金引上げ）対応済'
+        : '定数基準: 令和7年度（2025年度）｜2022年4月施行 年金制度改正対応済';
+}
+
+// ===========================
+// ユーティリティ
+// ===========================
+const fmt = n => Math.round(n).toLocaleString();
+const fmtYen = n => '¥' + fmt(n);
+function showMessage(msg, type) { document.getElementById('messageArea').innerHTML = `<div class="message ${type}">${msg}</div>`; }
+function getDecreaseRate(bd) { return bd >= C.BOUNDARY_DECREASE ? C.DECREASE_NEW : C.DECREASE_OLD; }
+function getMaxDeferralAge(bd) { return bd >= C.BOUNDARY_DEFER ? C.DEFER_MAX_NEW : C.DEFER_MAX_OLD; }
+function getTransUnit(bd) { return bd >= C.BOUNDARY_TRANS_UNIT ? C.TRANS_UNIT : C.TRANS_UNIT_OLD; }
+function getNpFull(bd) { return bd >= C.BOUNDARY_TRANS_UNIT ? C.NP_FULL : C.NP_FULL_OLD; }
+function monthDiff(d1, d2) { return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); }
+
+// 手取り概算（参考値）— 項目別に細分化
+function estimateNetPension(annualGross) {
+    if (annualGross <= 0) return { net: 0, tax: 0, insurance: 0, rate: 0, incomeTax: 0, residentTax: 0, healthIns: 0, nursingIns: 0, pensionDeduction: 0, basicDeduction: 0, taxableIncome: 0, totalDeductions: 0 };
+    // 65歳以上・公的年金等控除110万円、基礎控除48万円を適用した非常に簡易的な概算
+    const pensionDeduction = 1100000; // 公的年金等控除（65歳以上・330万円以下）
+    const basicDeduction = 480000;    // 基礎控除
+    const taxableIncome = Math.max(0, annualGross - pensionDeduction - basicDeduction);
+    const incomeTax = Math.max(0, taxableIncome <= 1950000 ? taxableIncome * 0.05 : taxableIncome <= 3300000 ? taxableIncome * 0.10 - 97500 : taxableIncome * 0.20 - 427500);
+    const residentTax = Math.max(0, taxableIncome * 0.10);
+    const healthIns = annualGross * 0.055;   // 国保概算約5.5%
+    const nursingIns = annualGross * 0.012;  // 介護保険概算約1.2%
+    const totalDeductions = incomeTax + residentTax + healthIns + nursingIns;
+    const net = annualGross - totalDeductions;
+    return {
+        net: Math.max(0, net), tax: incomeTax + residentTax, insurance: healthIns + nursingIns,
+        rate: annualGross > 0 ? (totalDeductions / annualGross * 100) : 0,
+        incomeTax, residentTax, healthIns, nursingIns,
+        pensionDeduction, basicDeduction, taxableIncome, totalDeductions
+    };
+}
+
+// ===========================
+// モード切替 & タブ制御
+// ===========================
+function switchMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach((b, i) => {
+        b.classList.toggle('active', (i === 0 && mode === 'teikibin') || (i === 1 && mode === 'excel'));
+    });
+    document.getElementById('mode-teikibin').classList.toggle('active', mode === 'teikibin');
+    document.getElementById('mode-excel').classList.toggle('active', mode === 'excel');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.dataset.tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if (tabId === 'chart' && lastMatrixData) updateChart();
+        });
+    });
+});
+
+// ===========================
+// ファイル読み込み (Excel)
+// ===========================
+document.getElementById('salaryFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById('fileStatus').textContent = `✅ ${file.name}`;
+    showMessage('ファイルを読み込み中...', 'loading');
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+            salaryData = processExcelSheets(wb);
+            if (salaryData.length === 0) throw new Error('有効なデータがありません');
+            showMessage(`✅ ${salaryData.length}件のデータを読み込みました`, 'success');
+        } catch (err) { showMessage('❌ ' + err.message, 'error'); salaryData = []; }
+    };
+    reader.readAsArrayBuffer(file);
+});
+
+function processExcelSheets(wb) {
+    const ss = '標準報酬月額', bs = '標準賞与';
+    if (!wb.SheetNames.includes(ss)) throw new Error(`シート「${ss}」が見つかりません`);
+    const sr = XLSX.utils.sheet_to_json(wb.Sheets[ss], { header: 1 });
+    const br = wb.SheetNames.includes(bs) ? XLSX.utils.sheet_to_json(wb.Sheets[bs], { header: 1 }) : [];
+    const dm = new Map();
+    for (let i = 1; i < sr.length; i++) {
+        const r = sr[i]; if (!r || r.length < 3) continue;
+        const [y, m, s] = [parseInt(r[0]), parseInt(r[1]), parseInt(String(r[2]).replace(/[^\d]/g, ''))];
+        if (y && m && s > 0) dm.set(`${y}-${m}`, { year: y, month: m, salary: s, bonus: 0 });
+    }
+    for (let i = 1; i < br.length; i++) {
+        const r = br[i]; if (!r || r.length < 3) continue;
+        const [y, m, b] = [parseInt(r[0]), parseInt(r[1]), parseInt(String(r[2]).replace(/[^\d]/g, ''))];
+        if (y && m && b > 0) {
+            const cap = Math.min(b, C.BONUS_CAP), k = `${y}-${m}`;
+            if (dm.has(k)) dm.get(k).bonus += cap; else dm.set(k, { year: y, month: m, salary: 0, bonus: cap });
+        }
+    }
+    return Array.from(dm.values()).sort((a, b) => a.year - b.year || a.month - b.month);
+}
+
+// ===========================
+// 共通: シナリオパース & 年金率計算
+// ===========================
+function parseScenarios(str) {
+    return str.split(',').map(s => {
+        const p = s.trim().split('/');
+        if (p.length === 2) { const y = parseInt(p[0]), m = parseInt(p[1]);
+            if (!isNaN(y) && !isNaN(m) && y > 2000 && m >= 1 && m <= 12) return { year: y, month: m }; }
+        return null;
+    }).filter(Boolean);
+}
+
+function buildPensions(epBase65, npBase65, transBase65, decreaseRate, maxDeferAge) {
+    const base65 = epBase65 + npBase65 + transBase65;
+    const pensions = [];
+    for (let age = 60; age <= maxDeferAge; age++) {
+        const md = (age - C.STD_AGE) * 12;
+        const rate = md < 0 ? 1.0 + md * decreaseRate : 1.0 + md * C.INCREASE;
+        const ep = epBase65 * rate, np = npBase65 * rate, trans = transBase65 * rate;
+        pensions.push({ age, rate, total: ep + np + trans, ep, np, trans, epBase: epBase65, npBase: npBase65, transBase: transBase65 });
+    }
+    return { pensions, base65 };
+}
+
+// ===========================
+// メイン計算
+// ===========================
+function calculate() {
+    try {
+        if (currentMode === 'teikibin') calculateFromTeikibin();
+        else calculateFromExcel();
+    } catch (err) { showMessage('❌ ' + err.message, 'error'); console.error(err); }
+}
+
+function calculateFromTeikibin() {
+    const birthYear = parseInt(document.getElementById('birthYear').value);
+    const birthMonth = parseInt(document.getElementById('birthMonth').value);
+    const birthDay = parseInt(document.getElementById('birthDay').value);
+    if (!birthYear || !birthMonth || !birthDay) throw new Error('基本情報を入力してください');
+
+    const birthdate = new Date(birthYear, birthMonth - 1, birthDay);
+    const scenarios = getRetirementDatesFromList('retirementList1');
+    if (scenarios.length === 0) throw new Error('有効な退職年月を入力してください');
+
+    const tbNp = parseInt(document.getElementById('tb_npBase').value) || 0;
+    const tbEp = parseInt(document.getElementById('tb_epBase').value) || 0;
+    const tbTrans = parseInt(document.getElementById('tb_transBase').value) || 0;
+    const tbEpMonths = parseInt(document.getElementById('tb_epMonths').value) || 0;
+    const tbNpMonths = parseInt(document.getElementById('tb_npMonths').value) || 0;
+    const tbSalary = (parseInt(document.getElementById('tb_salary').value) || 0) * 1000;
+    const tbBonus = (parseInt(document.getElementById('tb_bonus').value) || 0) * 1000;
+    const tbDataYear = parseInt(document.getElementById('tb_dataYear').value);
+    const tbDataMonth = parseInt(document.getElementById('tb_dataMonth').value);
+    const tbTotalPaid = parseInt(document.getElementById('tb_totalPaid').value) || 0;
+
+    if (!tbEp && !tbNp) throw new Error('ねんきん定期便の年金見込額を入力してください');
+
+    const dataDate = new Date(tbDataYear, tbDataMonth - 1, 1);
+    const age60 = new Date(birthdate.getFullYear() + 60, birthdate.getMonth(), 1);
+    const monthsDataTo60 = Math.max(0, monthDiff(dataDate, age60));
+    const monthlyRemuneration = tbSalary + tbBonus / 12;
+    const epAccrualPerMonth = monthlyRemuneration * C.RATE_AFTER_2003;
+    const transUnit = getTransUnit(birthdate);
+    const decreaseRate = getDecreaseRate(birthdate);
+    const maxDeferAge = getMaxDeferralAge(birthdate);
+    const matrixData = [];
+
+    scenarios.forEach(sc => {
+        const retDate = new Date(sc.year, sc.month - 1, 1);
+        const monthsDataToRetire = Math.max(0, monthDiff(dataDate, retDate));
+        const shortfall = monthsDataTo60 - monthsDataToRetire;
+        const adjEp = Math.max(0, tbEp - shortfall * epAccrualPerMonth);
+        const adjNp = tbNp;
+        const futureNpMonths = shortfall > 0 ? shortfall : 0;
+
+        let adjTrans = tbTrans;
+        if (shortfall > 0) {
+            adjTrans = Math.max(0, tbTrans - shortfall * (transUnit - getNpFull(birthdate) / C.NP_MAX_MONTHS));
+        } else {
+            const extraMonths = -shortfall;
+            const totalEpAtRetire = tbEpMonths + monthsDataToRetire;
+            if (totalEpAtRetire <= C.TRANS_MAX_MONTHS) {
+                adjTrans = tbTrans + extraMonths * transUnit;
+            }
+        }
+
+        const { pensions, base65 } = buildPensions(adjEp, adjNp, adjTrans, decreaseRate, maxDeferAge);
+        const epMonthsAtRetire = tbEpMonths + monthsDataToRetire;
+
+        const analysis = {
+            mode: 'teikibin',
+            totalEmployeeMonths: epMonthsAtRetire,
+            epMonths20to60: Math.min(tbEpMonths + Math.min(monthsDataToRetire, monthsDataTo60), C.NP_MAX_MONTHS),
+            basicPensionMonths: C.NP_MAX_MONTHS,
+            futureNpMonths, totalContributions: tbTotalPaid,
+            start: null, end: retDate,
+            monthsBefore: 0, monthsAfter: epMonthsAtRetire,
+            avgBefore: 0, avgAfter: Math.round(monthlyRemuneration),
+            tbEpMonthsCurrent: tbEpMonths, tbNpMonthsCurrent: tbNpMonths
+        };
+
+        matrixData.push({
+            year: sc.year, month: sc.month,
+            epBase: adjEp, npBase: adjNp, transAdd: adjTrans, base65,
+            analysis, pensions, decreaseRate, maxDeferAge
+        });
+    });
+
+    lastMatrixData = matrixData;
+
+    // 60歳退職前提のサマリー用データを計算
+    const { pensions: sumPensions, base65: sumBase65 } = buildPensions(tbEp, tbNp, tbTrans, decreaseRate, maxDeferAge);
+    const age60Year = age60.getFullYear(), age60Month = age60.getMonth() + 1;
+    displaySummary({ pensions: sumPensions, base65: sumBase65, year: age60Year, month: age60Month }, birthdate);
+
+    displayMatrix(matrixData);
+    displayAnalyses(matrixData, birthdate);
+    populateChartSelector(matrixData);
+    showMessage(`✅ 計算完了！（ねんきん定期便モード・${C.label}基準）`, 'success');
+    document.getElementById('results').classList.remove('hidden');
+}
+
+function calculateFromExcel() {
+    if (salaryData.length === 0) throw new Error('給与データをアップロードしてください');
+    const birthYear = parseInt(document.getElementById('birthYear2').value);
+    const birthMonth = parseInt(document.getElementById('birthMonth2').value);
+    const birthDay = parseInt(document.getElementById('birthDay2').value);
+    if (!birthYear || !birthMonth || !birthDay) throw new Error('基本情報を入力してください');
+
+    const birthdate = new Date(birthYear, birthMonth - 1, birthDay);
+    const scenarios = getRetirementDatesFromList('retirementList2');
+    if (scenarios.length === 0) throw new Error('有効な退職年月を入力してください');
+
+    const decreaseRate = getDecreaseRate(birthdate);
+    const maxDeferAge = getMaxDeferralAge(birthdate);
+    const matrixData = [];
+
+    scenarios.forEach(sc => {
+        const retDate = new Date(sc.year, sc.month - 1, 1);
+        const valid = salaryData.filter(item => new Date(item.year, item.month - 1, 1) < retDate);
+        if (valid.length === 0) { matrixData.push({ year: sc.year, month: sc.month, error: true }); return; }
+
+        const analysis = analyzeData(valid, birthdate, retDate);
+        analysis.mode = 'excel';
+        const epBase = calcEP(analysis);
+        const npBase = getNpFull(birthdate) * (analysis.basicPensionMonths / C.NP_MAX_MONTHS);
+        const unit = getTransUnit(birthdate);
+        const transAdd = Math.max(0, unit * Math.min(analysis.totalEmployeeMonths, C.TRANS_MAX_MONTHS)
+            - getNpFull(birthdate) * (analysis.epMonths20to60 / C.NP_MAX_MONTHS));
+
+        const { pensions, base65 } = buildPensions(epBase, npBase, transAdd, decreaseRate, maxDeferAge);
+        matrixData.push({ year: sc.year, month: sc.month, epBase, npBase, transAdd, base65, analysis, pensions, decreaseRate, maxDeferAge });
+    });
+
+    lastMatrixData = matrixData;
+    displaySummary(matrixData);
+    displayMatrix(matrixData);
+
+    displayAnalyses(matrixData, birthdate);
+    populateChartSelector(matrixData);
+    showMessage(`✅ 計算完了！（Excelモード ※再評価率未適用・${C.label}基準）`, 'success');
+    document.getElementById('results').classList.remove('hidden');
+}
+
+function analyzeData(data, birthdate, retDate) {
+    const age20 = new Date(birthdate.getFullYear() + 20, birthdate.getMonth(), 1);
+    const age60 = new Date(birthdate.getFullYear() + 60, birthdate.getMonth(), 1);
+    let mB = 0, mA = 0, sB = 0, sA = 0, bA = 0, tc = 0, ep2060 = 0;
+    data.forEach(item => {
+        const d = new Date(item.year, item.month - 1, 1);
+        tc += (item.salary + item.bonus) * C.EP_RATE_SELF;
+        if (d >= age20 && d < age60) ep2060++;
+        if (item.salary > 0) { if (d < C.H15_APRIL) { mB++; sB += item.salary; } else { mA++; sA += item.salary; } }
+        if (d >= C.H15_APRIL) bA += item.bonus;
+    });
+    let fnp = 0;
+    if (retDate < age60) fnp = Math.max(0, monthDiff(retDate, age60));
+    return {
+        totalEmployeeMonths: mB + mA, epMonths20to60: ep2060,
+        basicPensionMonths: Math.min(ep2060 + fnp, C.NP_MAX_MONTHS),
+        futureNpMonths: fnp, totalContributions: tc,
+        start: data.length > 0 ? new Date(data[0].year, data[0].month - 1, 1) : null,
+        end: new Date(retDate.getFullYear(), retDate.getMonth() - 1, 1),
+        monthsBefore: mB, monthsAfter: mA,
+        avgBefore: mB > 0 ? Math.round(sB / mB) : 0,
+        avgAfter: mA > 0 ? Math.round((sA + bA) / mA) : 0
+    };
+}
+
+function calcEP(a) { return a.avgBefore * C.RATE_BEFORE_2003 * a.monthsBefore + a.avgAfter * C.RATE_AFTER_2003 * a.monthsAfter; }
+
+// ===========================
+// サマリーバー表示
+// ===========================
+function displaySummary(matrixData) {
+    const bar = document.getElementById('summaryBar');
+    const first = matrixData.find(d => !d.error);
+    if (!first) { bar.innerHTML = ''; return; }
+
+    const p65 = first.pensions.find(x => x.age === 65);
+    const p60 = first.pensions.find(x => x.age === 60);
+    const p70 = first.pensions.find(x => x.age === 70);
+    const p75 = first.pensions.find(x => x.age === 75);
+
+    let html = '';
+    if (p65) {
+        const net = estimateNetPension(p65.total);
+        html += `<div class="summary-card">
+            <div class="sc-label">65歳受給（${first.year}年${first.month}月退職）</div>
+            <div class="sc-value">${fmtYen(Math.round(p65.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-sub">年額 ${fmtYen(Math.round(p65.total))}｜手取概算 月${fmtYen(Math.round(net.net / 12))}</div>
+        </div>`;
+    }
+    if (p60) {
+        html += `<div class="summary-card warn">
+            <div class="sc-label">60歳繰上げ（${((1-p60.rate)*100).toFixed(1)}%減額）</div>
+            <div class="sc-value">${fmtYen(Math.round(p60.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-sub">年額 ${fmtYen(Math.round(p60.total))}</div>
+        </div>`;
+    }
+    if (p70) {
+        html += `<div class="summary-card alt">
+            <div class="sc-label">70歳繰下げ（+${((p70.rate-1)*100).toFixed(1)}%増額）</div>
+            <div class="sc-value">${fmtYen(Math.round(p70.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-sub">年額 ${fmtYen(Math.round(p70.total))}</div>
+        </div>`;
+    }
+    if (p75) {
+        html += `<div class="summary-card alt">
+            <div class="sc-label">75歳繰下げ（+84.0%増額）</div>
+            <div class="sc-value">${fmtYen(Math.round(p75.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-sub">年額 ${fmtYen(Math.round(p75.total))}</div>
+        </div>`;
+    }
+    bar.innerHTML = html;
+}
+
+// ===========================
+// マトリックス表示
+// ===========================
+function displayMatrix(matrixData) {
+    const container = document.getElementById('matrixContainer');
+    if (!matrixData.length) { container.innerHTML = '<p>データがありません。</p>'; return; }
+    let allVals = [];
+    matrixData.forEach(d => { if (!d.error) d.pensions.forEach(p => allVals.push(p.total)); });
+    const minVal = Math.min(...allVals), maxVal = Math.max(...allVals);
+    const maxAge = matrixData.reduce((m, d) => d.maxDeferAge ? Math.max(m, d.maxDeferAge) : m, 70);
+    const dr = matrixData.find(d => !d.error)?.decreaseRate || C.DECREASE_NEW;
+
+    let html = '<table class="matrix-table"><thead><tr><th>退職年月</th>';
+    for (let age = 60; age <= maxAge; age++) {
+        const md = (age - 65) * 12;
+        const rc = md < 0 ? md * dr : md * C.INCREASE;
+        const pct = (rc * 100).toFixed(1), sign = rc >= 0 ? '+' : '';
+        html += `<th data-age="${age}">${age}歳<span class="rate-label">${sign}${pct}%</span></th>`;
+    }
+    html += '</tr></thead><tbody>';
+    matrixData.forEach((row, ri) => {
+        html += `<tr><td>${row.year}年${row.month}月</td>`;
+        if (row.error) { html += `<td colspan="${maxAge - 59}" class="error-msg">データ不足</td>`; }
+        else {
+            for (let age = 60; age <= maxAge; age++) {
+                const p = row.pensions.find(x => x.age === age);
+                if (!p) { html += '<td class="cell" style="background:#f0f0f0">—</td>'; continue; }
+                const ratio = allVals.length > 1 ? (p.total - minVal) / (maxVal - minVal) : 0.5;
+                const hue = Math.round(ratio * 120);
+                const dp = ((p.rate - 1) * 100).toFixed(1);
+                html += `<td class="cell" style="background:hsl(${hue},55%,92%)" data-ri="${ri}" data-age="${age}" onclick="showCellDetail(${ri},${age})">
+                    <div class="monthly">${fmt(Math.round(p.total / 12))}</div>
+                    <div class="annual">${fmt(Math.round(p.total))}</div>
+                    <div class="rate-diff ${p.rate >= 1 ? 'plus' : 'minus'}">${p.rate >= 1 ? '+' : ''}${dp}%</div></td>`;
+            }
+        }
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    if (matrixData.length > 0 && !matrixData[0].error) showCellDetail(0, 65);
+}
+
+// ===========================
+// セル詳細パネル
+// ===========================
+function showCellDetail(ri, age) {
+    const panel = document.getElementById('detailPanel');
+    const d = lastMatrixData[ri]; if (!d || d.error) return;
+    const p = d.pensions.find(x => x.age === age); if (!p) return;
+    // クリア
+    document.querySelectorAll('.cell.selected, .cell.cross-row, .cell.cross-col').forEach(el => el.classList.remove('selected','cross-row','cross-col'));
+    document.querySelectorAll('.first-col-highlight').forEach(el => el.classList.remove('first-col-highlight'));
+    document.querySelectorAll('.col-highlight').forEach(el => el.classList.remove('col-highlight'));
+    // 十字ハイライト: 同じ行
+    document.querySelectorAll(`.cell[data-ri="${ri}"]`).forEach(el => el.classList.add('cross-row'));
+    // 十字ハイライト: 同じ列
+    document.querySelectorAll(`.cell[data-age="${age}"]`).forEach(el => el.classList.add('cross-col'));
+    // 選択セル
+    const sel = document.querySelector(`.cell[data-ri="${ri}"][data-age="${age}"]`);
+    if (sel) sel.classList.add('selected');
+    // 行ヘッダーハイライト
+    const rows = document.querySelectorAll('.matrix-table tbody tr');
+    if (rows[ri]) rows[ri].querySelector('td:first-child')?.classList.add('first-col-highlight');
+    // 列ヘッダーハイライト
+    const thMatch = document.querySelector(`.matrix-table thead th[data-age="${age}"]`);
+    if (thMatch) thMatch.classList.add('col-highlight');
+    const diff = p.total - d.base65, ds = diff >= 0 ? '+' : '';
+    const lbl = age < 65 ? `繰上げ ${((1 - p.rate) * 100).toFixed(1)}% 減額` : age === 65 ? '標準（増減なし）' : `繰下げ ${((p.rate - 1) * 100).toFixed(1)}% 増額`;
+
+    const net = estimateNetPension(p.total);
+    const a = d.analysis;
+    const npMonths = a?.futureNpMonths || 0;
+    const npCost = npMonths > 0 ? npMonths * C.NP_MONTHLY_PAYMENT : 0;
+
+    let npHtml = '';
+    if (npCost > 0) {
+        npHtml = `<div class="detail-item" style="background:var(--warning-bg);"><span class="label" style="color:#92400E;">国年保険料（退職〜60歳・${npMonths}ヶ月）</span><span class="value" style="color:#DC2626;">${fmtYen(npCost)}</span></div>`;
+    }
+
+    panel.innerHTML = `
+        <h4>📌 ${d.year}年${d.month}月退職 → ${age}歳受給開始（${lbl}）</h4>
+        <div class="detail-grid">
+            <div class="detail-item"><span class="label">老齢基礎年金（年額）</span><span class="value">${fmtYen(Math.round(p.np))}</span></div>
+            <div class="detail-item"><span class="label">老齢厚生年金 報酬比例（年額）</span><span class="value">${fmtYen(Math.round(p.ep))}</span></div>
+            <div class="detail-item"><span class="label">経過的加算（年額）</span><span class="value">${fmtYen(Math.round(p.trans))}</span></div>
+            <div class="detail-item highlight"><span class="label">合計年額（額面）</span><span class="value">${fmtYen(Math.round(p.total))}</span></div>
+            <div class="detail-item highlight"><span class="label">合計月額（額面）</span><span class="value">${fmtYen(Math.round(p.total / 12))}</span></div>
+            <div class="detail-item"><span class="label">65歳基準との差額（年額）</span><span class="value">${ds}${fmtYen(Math.round(diff))}</span></div>
+            <div class="detail-item success"><span class="label">手取り概算（月額）</span><span class="value">約${fmtYen(Math.round(net.net / 12))}</span></div>
+            <div class="detail-item"><span class="label">概算控除率</span><span class="value">約${net.rate.toFixed(1)}%（税+社保）</span></div>
+            ${npHtml}
+        </div>
+        <p style="font-size:0.78em;color:var(--gray-400);margin:8px 0 0;">※ 手取りは65歳以上・単身・他収入なしを前提とした非常に簡易的な概算です。配偶者控除・医療費控除等は含みません。</p>`;
+    panel.classList.add('visible');
+}
+
+// ===========================
+// 損益分岐分析
+// ===========================
+
+// ===========================
+// 累積チャート
+// ===========================
+function populateChartSelector(md) {
+    const sel = document.getElementById('chartScenario'); sel.innerHTML = '';
+    md.forEach((d, i) => { if (d.error) return; const o = document.createElement('option'); o.value = i; o.textContent = `${d.year}年${d.month}月退職`; sel.appendChild(o); });
+    // チェックボックスも生成
+    populateChartAgeCheckboxes();
+}
+function populateChartAgeCheckboxes() {
+    const container = document.getElementById('chartAgeCheckboxes');
+    if (!lastMatrixData) return;
+    const first = lastMatrixData.find(d => !d.error);
+    if (!first) return;
+    const maxAge = first.maxDeferAge || 75;
+    const allAges = [];
+    for (let a = 60; a <= maxAge; a++) allAges.push(a);
+    const defaultChecked = [60, 62, 63, 65, 68, 70, 75].filter(a => a <= maxAge);
+    const colorMap = {};
+    const palette = ['#EF4444','#F97316','#F59E0B','#EAB308','#84CC16','#22C55E','#14B8A6','#06B6D4','#3B82F6','#6366F1','#8B5CF6','#A855F7','#D946EF','#EC4899','#F43F5E','#78716C'];
+    allAges.forEach((a, i) => { colorMap[a] = palette[i % palette.length]; });
+    container.innerHTML = '';
+    allAges.forEach(a => {
+        const checked = defaultChecked.includes(a);
+        const chip = document.createElement('label');
+        chip.className = 'age-chip' + (checked ? ' checked' : '');
+        chip.style.borderColor = checked ? colorMap[a] : '';
+        chip.style.background = checked ? colorMap[a] : '';
+        chip.style.color = checked ? 'white' : '';
+        chip.innerHTML = `<input type="checkbox" value="${a}" ${checked ? 'checked' : ''}>${a}歳`;
+        chip.querySelector('input').addEventListener('change', function() {
+            if (this.checked) { chip.classList.add('checked'); chip.style.borderColor = colorMap[a]; chip.style.background = colorMap[a]; chip.style.color = 'white'; }
+            else { chip.classList.remove('checked'); chip.style.borderColor = ''; chip.style.background = ''; chip.style.color = ''; }
+            updateChart();
+        });
+        container.appendChild(chip);
+    });
+}
+function getSelectedChartAges() {
+    const checks = document.querySelectorAll('#chartAgeCheckboxes input[type="checkbox"]:checked');
+    return Array.from(checks).map(c => parseInt(c.value));
+}
+let chartMode = 'gross'; // 'gross' or 'net'
+function setChartMode(mode) {
+    chartMode = mode;
+    document.querySelectorAll('#chartModeToggle .cmt-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    updateChart();
+}
+function updateChart() {
+    const idx = parseInt(document.getElementById('chartScenario').value);
+    if (!lastMatrixData || !lastMatrixData[idx] || lastMatrixData[idx].error) return;
+    renderCumulativeChart(lastMatrixData[idx]);
+}
+function populateBreakevenSelectors(ages) {
+    const selA = document.getElementById('breakevenA');
+    const selB = document.getElementById('breakevenB');
+    const prevA = selA.value, prevB = selB.value;
+    selA.innerHTML = '<option value="">— 選択 —</option>';
+    selB.innerHTML = '<option value="">— 選択 —</option>';
+    ages.forEach(a => {
+        selA.innerHTML += `<option value="${a}" ${String(a) === prevA ? 'selected' : ''}>${a}歳</option>`;
+        selB.innerHTML += `<option value="${a}" ${String(a) === prevB ? 'selected' : ''}>${a}歳</option>`;
+    });
+    // 初回デフォルト: 先に若い方と65歳をセット
+    if (!selA.value && ages.length >= 2) {
+        const sorted = [...ages].sort((a, b) => a - b);
+        const younger = sorted.find(a => a < 65) || sorted[0];
+        const older = sorted.find(a => a >= 65) || sorted[sorted.length - 1];
+        if (younger !== older) { selA.value = younger; selB.value = older; }
+    }
+}
+
+function renderCumulativeChart(d) {
+    const ctx = document.getElementById('cumulativeChart').getContext('2d');
+    if (cumulativeChart) cumulativeChart.destroy();
+    const selectedAges = getSelectedChartAges();
+    const ages = selectedAges.length > 0 ? selectedAges : [60, 65, 70, 75];
+    const isNet = chartMode === 'net';
+    const palette = ['#EF4444','#F97316','#F59E0B','#EAB308','#84CC16','#22C55E','#14B8A6','#06B6D4','#3B82F6','#6366F1','#8B5CF6','#A855F7','#D946EF','#EC4899','#F43F5E','#78716C'];
+    const maxAge = d.maxDeferAge || 75;
+    const allAgesForColor = [];
+    for (let a = 60; a <= maxAge; a++) allAgesForColor.push(a);
+
+    // 損益分岐セレクター更新
+    populateBreakevenSelectors(ages);
+
+    // 各年齢の年額（額面/手取り）を事前計算
+    const pensionAmounts = {};
+    ages.forEach(sa => {
+        const p = d.pensions.find(x => x.age === sa);
+        if (!p) return;
+        const annual = isNet ? estimateNetPension(p.total).net : p.total;
+        pensionAmounts[sa] = { annual, pension: p };
+    });
+
+    const datasets = ages.map(sa => {
+        if (!pensionAmounts[sa]) return null;
+        const { annual, pension: p } = pensionAmounts[sa];
+        const colorIdx = allAgesForColor.indexOf(sa);
+        const color = palette[colorIdx >= 0 ? colorIdx % palette.length : 0];
+        const pts = [];
+        for (let a = 60; a <= 100; a++) pts.push({ x: a, y: Math.round((a >= sa ? (a - sa) * annual : 0) / 10000) });
+        const labelAmt = isNet ? `手取年${fmt(Math.round(annual))}円` : `年${fmt(Math.round(annual))}円`;
+        return { label: `${sa}歳開始 (${labelAmt})`, data: pts, borderColor: color, fill: false, tension: 0, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2.5, _startAge: sa, _annual: annual, _color: color };
+    }).filter(Boolean);
+
+    // 基本アノテーション
+    const annotations = {
+        maleLine: { type: 'line', xMin: 81.5, xMax: 81.5, borderColor: 'rgba(239,68,68,0.4)', borderWidth: 2, borderDash: [6, 4], label: { display: true, content: '男性平均寿命 81.5歳', position: 'start', font: { size: 10 }, backgroundColor: 'rgba(239,68,68,0.7)' } },
+        femaleLine: { type: 'line', xMin: 87.6, xMax: 87.6, borderColor: 'rgba(236,72,153,0.4)', borderWidth: 2, borderDash: [6, 4], label: { display: true, content: '女性平均寿命 87.6歳', position: 'start', font: { size: 10 }, backgroundColor: 'rgba(236,72,153,0.7)' } }
+    };
+
+    // 選択された2つの年齢間の損益分岐点
+    const beAgeA = parseInt(document.getElementById('breakevenA').value);
+    const beAgeB = parseInt(document.getElementById('breakevenB').value);
+    const beResult = document.getElementById('breakevenResult');
+    beResult.textContent = '';
+    if (!isNaN(beAgeA) && !isNaN(beAgeB) && beAgeA !== beAgeB && pensionAmounts[beAgeA] && pensionAmounts[beAgeB]) {
+        const annA = pensionAmounts[beAgeA].annual, annB = pensionAmounts[beAgeB].annual;
+        if (annA !== annB) {
+            const beAge = (beAgeA * annA - beAgeB * annB) / (annA - annB);
+            if (beAge >= Math.max(beAgeA, beAgeB) && beAge <= 100) {
+                const beY = Math.round((beAge - beAgeA) * annA / 10000);
+                const beAgeYears = Math.floor(beAge);
+                const beAgeMonths = Math.round((beAge - beAgeYears) * 12);
+                const beLabel = beAgeMonths > 0 ? `${beAgeYears}歳${beAgeMonths}ヶ月` : `${beAgeYears}歳`;
+                beResult.textContent = `→ 損益分岐: ${beLabel}（約${beY.toLocaleString()}万円）`;
+                annotations['breakeven'] = {
+                    type: 'point', xValue: Math.round(beAge * 10) / 10, yValue: beY,
+                    backgroundColor: 'rgba(99,102,241,0.9)', borderColor: 'white', borderWidth: 3, radius: 8,
+                    label: { display: true, content: beLabel, position: 'top',
+                        font: { size: 11, weight: 'bold' }, backgroundColor: 'rgba(99,102,241,0.9)', padding: 5, yAdjust: -14 }
+                };
+                // 分岐点の垂直線
+                annotations['beLine'] = {
+                    type: 'line', xMin: Math.round(beAge * 10) / 10, xMax: Math.round(beAge * 10) / 10,
+                    borderColor: 'rgba(99,102,241,0.3)', borderWidth: 2, borderDash: [4, 4]
+                };
+            } else {
+                beResult.textContent = '→ 100歳以内に分岐なし';
+                beResult.style.color = 'var(--gray-400)';
+            }
+        }
+    }
+    if (beResult.textContent && !beResult.textContent.includes('分岐なし')) beResult.style.color = 'var(--primary)';
+
+    const modeLabel = isNet ? '累計手取り' : '累計受給額';
+    cumulativeChart = new Chart(ctx, { type: 'line', data: { datasets }, options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: {
+            title: { display: true, text: `${modeLabel} — ${d.year}年${d.month}月退職`, font: { size: 14 } },
+            tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString()}万円` } },
+            legend: { position: 'bottom' },
+            annotation: { annotations }
+        },
+        scales: { x: { type: 'linear', min: 60, max: 100, title: { display: true, text: '年齢（歳）' }, ticks: { stepSize: 5 } },
+            y: { title: { display: true, text: `${modeLabel}（万円）` }, ticks: { callback: v => v.toLocaleString() + '万' } } }
+    }});
+}
+
+// ===========================
+// 詳細分析表示（セレクター初期化 + 3列比較）
+// ===========================
+let lastBirthdate = null;
+function displayAnalyses(matrixData, birthdate) {
+    lastBirthdate = birthdate;
+    // シナリオセレクター初期化
+    const scenSel = document.getElementById('analysisScenario');
+    scenSel.innerHTML = '';
+    matrixData.forEach((d, i) => {
+        if (d.error) return;
+        const o = document.createElement('option'); o.value = i;
+        o.textContent = `${d.year}年${d.month}月退職`;
+        scenSel.appendChild(o);
+    });
+    // 年齢セレクター初期化
+    populateAnalysisAgeSelectors();
+    updateAnalysis();
+}
+
+function populateAnalysisAgeSelectors() {
+    const idx = parseInt(document.getElementById('analysisScenario').value);
+    if (!lastMatrixData || !lastMatrixData[idx] || lastMatrixData[idx].error) return;
+    if (!lastBirthdate) return;
+    const bd = lastBirthdate;
+    const maxAge = lastMatrixData[idx].maxDeferAge || 75;
+    const defaultAges = [60, 65, 70];
+    for (let n = 1; n <= 3; n++) {
+        const yInput = document.getElementById('analysisStartY' + n);
+        const mInput = document.getElementById('analysisStartM' + n);
+        // 初回のみデフォルト設定（値が空の場合）
+        if (!yInput.value || !mInput.value) {
+            const defAge = Math.min(defaultAges[n - 1], maxAge);
+            const startDate = new Date(bd.getFullYear() + defAge, bd.getMonth(), 1);
+            yInput.value = startDate.getFullYear();
+            mInput.value = startDate.getMonth() + 1;
+        }
+    }
+    updateAnalysisAgeDisplay();
+}
+
+function calcAgeFromDate(bd, year, month) {
+    const totalMonths = (year - bd.getFullYear()) * 12 + (month - 1 - bd.getMonth());
+    const ageY = Math.floor(totalMonths / 12);
+    const ageM = totalMonths % 12;
+    return { ageY: Math.max(0, ageY), ageM: Math.max(0, ageM), totalMonths };
+}
+
+function updateAnalysisAgeDisplay() {
+    if (!lastBirthdate) return;
+    const bd = lastBirthdate;
+    for (let n = 1; n <= 3; n++) {
+        const y = parseInt(document.getElementById('analysisStartY' + n).value);
+        const m = parseInt(document.getElementById('analysisStartM' + n).value);
+        const disp = document.getElementById('analysisAgeDisp' + n);
+        if (!isNaN(y) && !isNaN(m) && y > 2000 && m >= 1 && m <= 12) {
+            const { ageY, ageM } = calcAgeFromDate(bd, y, m);
+            disp.textContent = ageM > 0 ? `${ageY}歳${ageM}ヶ月` : `${ageY}歳`;
+        } else {
+            disp.textContent = '';
+        }
+    }
+}
+
+function updateAnalysis() {
+    const idx = parseInt(document.getElementById('analysisScenario').value);
+    if (!lastMatrixData || !lastMatrixData[idx] || lastMatrixData[idx].error) return;
+    if (!lastBirthdate) return;
+    const d = lastMatrixData[idx];
+    const bd = lastBirthdate;
+    const maxAge = d.maxDeferAge || 75;
+    const entries = [];
+    for (let n = 1; n <= 3; n++) {
+        const y = parseInt(document.getElementById('analysisStartY' + n).value);
+        const m = parseInt(document.getElementById('analysisStartM' + n).value);
+        if (isNaN(y) || isNaN(m) || y < 2000 || m < 1 || m > 12) continue;
+        const { ageY, ageM, totalMonths } = calcAgeFromDate(bd, y, m);
+        const minMonths = 60 * 12, maxMonths = maxAge * 12;
+        if (totalMonths < minMonths || totalMonths > maxMonths) continue;
+        entries.push({ startYear: y, startMonth: m, ageY, ageM, totalMonths });
+    }
+    if (entries.length === 0) {
+        const defDate = new Date(bd.getFullYear() + 65, bd.getMonth(), 1);
+        entries.push({ startYear: defDate.getFullYear(), startMonth: defDate.getMonth() + 1, ageY: 65, ageM: 0, totalMonths: 780 });
+    }
+    updateAnalysisAgeDisplay();
+    renderAnalysisComparison(d, entries);
+}
+
+function renderAnalysisComparison(d, entries) {
+    const ct = document.getElementById('analysisContainer');
+    const a = d.analysis;
+    const isTB = a?.mode === 'teikibin';
+    const birthdate = lastBirthdate;
+    const colColors = ['linear-gradient(135deg,#3B82F6,#6366F1)', 'linear-gradient(135deg,#059669,#14B8A6)', 'linear-gradient(135deg,#D97706,#F59E0B)'];
+
+    // 年月レベルで年金額を計算
+    function calcPensionAtAgeMonth(ageY, ageM) {
+        const md = (ageY - C.STD_AGE) * 12 + ageM;
+        const rate = md < 0 ? 1.0 + md * d.decreaseRate : 1.0 + md * C.INCREASE;
+        const epBase = d.pensions[0].epBase, npBase = d.pensions[0].npBase, transBase = d.pensions[0].transBase;
+        const ep = epBase * rate, np = npBase * rate, trans = transBase * rate;
+        return { ageY, ageM, rate, total: ep + np + trans, ep, np, trans };
+    }
+
+    const pensionData = entries.map(e => calcPensionAtAgeMonth(e.ageY, e.ageM));
+    const maxTotal = Math.max(...pensionData.map(p => p.total));
+
+    let html = '';
+
+    // 基本情報カード
+    html += `<div class="analysis-card" style="margin-bottom:16px;"><div class="analysis-card-header"><span>${d.year}年${d.month}月退職</span><span style="font-size:0.85em;opacity:0.8;">65歳年額: ${fmtYen(Math.round(d.base65))}</span></div><div class="analysis-card-body" style="font-size:0.9em;">`;
+    if (isTB) {
+        html += `<div class="stat-row"><span class="label">厚生年金 加入月数（定期便時点→退職時推定）</span><span class="value">${a.tbEpMonthsCurrent} → ${a.totalEmployeeMonths}ヶ月</span></div>`;
+        html += `<div class="stat-row"><span class="label">国民年金 加入月数</span><span class="value">${a.tbNpMonthsCurrent}ヶ月</span></div>`;
+    }
+    html += `<div class="stat-row"><span class="label">繰上げ減額率</span><span class="value">${(d.decreaseRate*100).toFixed(1)}%/月</span></div>`;
+    html += `<div class="stat-row"><span class="label">繰下げ上限</span><span class="value">${d.maxDeferAge}歳（最大+${((d.maxDeferAge-65)*12*C.INCREASE*100).toFixed(1)}%）</span></div>`;
+    // 国民年金自己負担（早期退職時）
+    if (a.futureNpMonths > 0) {
+        const npCost = a.futureNpMonths * C.NP_MONTHLY_PAYMENT;
+        const retAgeInfo = birthdate ? calcAgeFromDate(birthdate, d.year, d.month) : null;
+        const retAgeLabel = retAgeInfo ? `${retAgeInfo.ageY}歳${retAgeInfo.ageM > 0 ? retAgeInfo.ageM + 'ヶ月' : ''}` : '';
+        html += `<div class="stat-row" style="background:var(--warning-bg);margin:0 -20px;padding:10px 20px;"><span class="label" style="color:#92400E;">⚠️ 国年保険料（退職${retAgeLabel}〜60歳・${a.futureNpMonths}ヶ月）</span><span class="value" style="color:#DC2626;">${fmtYen(C.NP_MONTHLY_PAYMENT)}/月 × ${a.futureNpMonths} = ${fmtYen(npCost)}</span></div>`;
+    }
+    html += `</div></div>`;
+
+    // 3列比較
+    html += '<div class="compare-grid">';
+    entries.forEach((e, ci) => {
+        const p = pensionData[ci];
+        if (!p) return;
+        const netInfo = estimateNetPension(p.total);
+        const isBest = p.total === maxTotal && entries.length > 1;
+        const ageLabel = e.ageM > 0 ? `${e.ageY}歳${e.ageM}ヶ月` : `${e.ageY}歳`;
+        const dateLabel = `${e.startYear}年${e.startMonth}月`;
+        const md = (e.ageY - 65) * 12 + e.ageM;
+        const rateLabel = md < 0 ? `${((1 - p.rate) * 100).toFixed(1)}%減額` : md === 0 ? '標準' : `+${((p.rate - 1) * 100).toFixed(1)}%増額`;
+        const diff65 = p.total - d.base65;
+        const diffSign = diff65 >= 0 ? '+' : '';
+        const startAgeDecimal = e.ageY + e.ageM / 12;
+
+        html += `<div class="compare-col${isBest ? ' best' : ''}">`;
+        html += `<div class="compare-col-header" style="background:${colColors[ci]};">${dateLabel}（${ageLabel}）開始${isBest ? '<span class="compare-best-badge">最高額</span>' : ''}<div class="ch-sub">${rateLabel}（${md >= 0 ? '+' : ''}${md}ヶ月）</div></div>`;
+        html += `<div class="compare-col-body">`;
+
+        // 年金額
+        html += `<div class="ci-section">年金額</div>`;
+        html += `<div class="ci-row"><span class="ci-label">基礎年金（年）</span><span class="ci-value">${fmtYen(Math.round(p.np))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">厚生年金（年）</span><span class="ci-value">${fmtYen(Math.round(p.ep))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">経過的加算（年）</span><span class="ci-value">${fmtYen(Math.round(p.trans))}</span></div>`;
+        html += `<div class="ci-row ci-highlight"><span class="ci-label">合計月額</span><span class="ci-value" style="font-size:1.1em;">${fmtYen(Math.round(p.total / 12))}</span></div>`;
+        html += `<div class="ci-row ci-highlight"><span class="ci-label">合計年額</span><span class="ci-value">${fmtYen(Math.round(p.total))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">65歳比 差額/年</span><span class="ci-value" style="color:${diff65 >= 0 ? 'var(--success)' : 'var(--error)'};">${diffSign}${fmtYen(Math.round(diff65))}</span></div>`;
+
+        // 控除・手取り
+        html += `<div class="ci-section">控除・手取り概算</div>`;
+        html += `<div class="ci-row"><span class="ci-label">所得税</span><span class="ci-value">−${fmtYen(Math.round(netInfo.incomeTax))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">住民税</span><span class="ci-value">−${fmtYen(Math.round(netInfo.residentTax))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">国保</span><span class="ci-value">−${fmtYen(Math.round(netInfo.healthIns))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">介護保険</span><span class="ci-value">−${fmtYen(Math.round(netInfo.nursingIns))}</span></div>`;
+        html += `<div class="ci-row"><span class="ci-label">控除合計</span><span class="ci-value">−${fmtYen(Math.round(netInfo.totalDeductions))}（${netInfo.rate.toFixed(1)}%）</span></div>`;
+        html += `<div class="ci-row ci-highlight"><span class="ci-label">手取り月額</span><span class="ci-value" style="font-size:1.1em;">約${fmtYen(Math.round(netInfo.net / 12))}</span></div>`;
+        html += `<div class="ci-row ci-highlight"><span class="ci-label">手取り年額</span><span class="ci-value">約${fmtYen(Math.round(netInfo.net))}</span></div>`;
+
+        // 累計受給額
+        html += `<div class="ci-section">累計受給額</div>`;
+        [75, 80, 85, 90, 95, 100].forEach(checkAge => {
+            const yearsReceiving = checkAge - startAgeDecimal;
+            if (yearsReceiving <= 0) return;
+            const cumul = Math.round(yearsReceiving * p.total / 10000);
+            html += `<div class="ci-row"><span class="ci-label">${checkAge}歳時点</span><span class="ci-value">${cumul.toLocaleString()}万円</span></div>`;
+        });
+
+        // 累計手取り
+        html += `<div class="ci-section" style="background:#D1FAE5;color:#065F46;">累計手取り</div>`;
+        [75, 80, 85, 90, 95, 100].forEach(checkAge => {
+            const yearsReceiving = checkAge - startAgeDecimal;
+            if (yearsReceiving <= 0) return;
+            const cumulNet = Math.round(yearsReceiving * netInfo.net / 10000);
+            html += `<div class="ci-row"><span class="ci-label">${checkAge}歳時点</span><span class="ci-value" style="color:#065F46;">${cumulNet.toLocaleString()}万円</span></div>`;
+        });
+
+        html += `</div></div>`;
+    });
+    html += '</div>';
+    html += `<p style="font-size:0.78em;color:var(--gray-400);margin-top:12px;">※ 手取りは65歳以上・単身・他収入なし前提の概算。配偶者控除・医療費控除等は含みません。</p>`;
+    ct.innerHTML = html;
+}
+</script>
+</body>
+</html>
