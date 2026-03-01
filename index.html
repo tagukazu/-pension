@@ -406,7 +406,7 @@
                 </div>
                 <div class="card">
                     <div class="card-title">📋 ねんきん定期便の年金見込額</div>
-                    <div class="tb-prefilled">✅ ねんきん定期便（令和8年2月28日付）の値がプリセットされています</div>
+                    <div class="tb-prefilled">✅ サンプルデータ（架空の人物）がプリセットされています ― 実際のねんきん定期便の値に書き換えてください</div>
                     <div class="tb-section-title">65歳時の年金見込額（年額）</div>
                     <div class="tb-grid">
                         <div class="tb-group">
@@ -1042,9 +1042,26 @@ function calculateFromExcel() {
     });
 
     lastMatrixData = matrixData;
-    displaySummary(matrixData);
-    displayMatrix(matrixData);
 
+    // 60歳退職前提のサマリー用データを計算
+    const age60 = new Date(birthYear + 60, birthMonth - 1, 1);
+    const age60Year = age60.getFullYear(), age60Month = age60.getMonth() + 1;
+    const valid60 = salaryData.filter(item => new Date(item.year, item.month - 1, 1) < age60);
+    if (valid60.length > 0) {
+        const analysis60 = analyzeData(valid60, birthdate, age60);
+        analysis60.mode = 'excel';
+        const epBase60 = calcEP(analysis60);
+        const npBase60 = getNpFull(birthdate) * (analysis60.basicPensionMonths / C.NP_MAX_MONTHS);
+        const unit60 = getTransUnit(birthdate);
+        const transAdd60 = Math.max(0, unit60 * Math.min(analysis60.totalEmployeeMonths, C.TRANS_MAX_MONTHS)
+            - getNpFull(birthdate) * (analysis60.epMonths20to60 / C.NP_MAX_MONTHS));
+        const { pensions: sumPensions, base65: sumBase65 } = buildPensions(epBase60, npBase60, transAdd60, decreaseRate, maxDeferAge);
+        displaySummary({ pensions: sumPensions, base65: sumBase65, year: age60Year, month: age60Month }, birthdate);
+    } else {
+        displaySummary(null, birthdate);
+    }
+
+    displayMatrix(matrixData);
     displayAnalyses(matrixData, birthdate);
     populateChartSelector(matrixData);
     showMessage(`✅ 計算完了！（Excelモード ※再評価率未適用・${C.label}基準）`, 'success');
@@ -1081,21 +1098,24 @@ function calcEP(a) { return a.avgBefore * C.RATE_BEFORE_2003 * a.monthsBefore + 
 // ===========================
 // サマリーバー表示
 // ===========================
-function displaySummary(matrixData) {
+function displaySummary(summaryData, birthdate) {
     const bar = document.getElementById('summaryBar');
-    const first = matrixData.find(d => !d.error);
-    if (!first) { bar.innerHTML = ''; return; }
+    if (!summaryData || !summaryData.pensions) { bar.innerHTML = ''; return; }
 
-    const p65 = first.pensions.find(x => x.age === 65);
-    const p60 = first.pensions.find(x => x.age === 60);
-    const p70 = first.pensions.find(x => x.age === 70);
-    const p75 = first.pensions.find(x => x.age === 75);
+    const p65 = summaryData.pensions.find(x => x.age === 65);
+    const p60 = summaryData.pensions.find(x => x.age === 60);
+    const p70 = summaryData.pensions.find(x => x.age === 70);
+    const p75 = summaryData.pensions.find(x => x.age === 75);
+
+    const age60Y = birthdate.getFullYear() + 60;
+    const age60M = birthdate.getMonth() + 1;
+    const retLabel = `${age60Y}年${age60M}月`;
 
     let html = '';
     if (p65) {
         const net = estimateNetPension(p65.total);
         html += `<div class="summary-card">
-            <div class="sc-label">65歳受給（${first.year}年${first.month}月退職）</div>
+            <div class="sc-label">65歳受給（60歳退職前提・${retLabel}）</div>
             <div class="sc-value">${fmtYen(Math.round(p65.total / 12))}<span style="font-size:0.5em">/月</span></div>
             <div class="sc-sub">年額 ${fmtYen(Math.round(p65.total))}｜手取概算 月${fmtYen(Math.round(net.net / 12))}</div>
         </div>`;
