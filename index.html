@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>それいけ年金君シミュレーター（令和8年度基準）</title>
     <style>
         :root {
@@ -35,10 +35,10 @@
         .content { padding: 36px 44px; }
 
         /* Fiscal Year Toggle */
-        .fy-toggle { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: var(--info-bg); border: 1px solid #BAE6FD; border-radius: var(--radius); }
+        .fy-toggle { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 14px 20px; background: var(--info-bg); border: 1px solid #BAE6FD; border-radius: var(--radius); flex-wrap: wrap; }
         .fy-toggle label { font-weight: 700; color: var(--info); font-size: 0.92em; white-space: nowrap; }
-        .fy-toggle select { padding: 6px 12px; border: 1.5px solid #7DD3FC; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--info); background: white; cursor: pointer; }
-        .fy-toggle .fy-note { font-size: 0.82em; color: #0369A1; }
+        .fy-toggle select { padding: 6px 12px; border: 1.5px solid #7DD3FC; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--info); background: white; cursor: pointer; width: auto; }
+        .fy-toggle .fy-note { font-size: 0.82em; color: #0369A1; flex-basis: 100%; }
 
         /* Disclaimer */
         .disclaimer { background: var(--warning-bg); border: 1px solid #FDE68A; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 28px; font-size: 0.88em; color: #92400E; }
@@ -63,7 +63,7 @@
         .form-group label { display: flex; align-items: center; gap: 4px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; font-size: 0.88em; }
         .date-inputs { display: flex; align-items: center; gap: 6px; }
         .date-inputs input[placeholder="年"] { width: 100px; text-align: center; }
-        .date-inputs input[placeholder="月"], .date-inputs input[placeholder="日"] { width: 72px; text-align: center; }
+        .date-inputs input[placeholder="月"], .date-inputs input[placeholder="日"] { width: 80px; text-align: center; }
         .date-inputs input { text-align: center; }
         .date-inputs span { color: var(--gray-500); font-size: 0.9em; }
         input, select { padding: 10px 14px; border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 15px; transition: border-color 0.2s, box-shadow 0.2s; background: white; width: 100%; }
@@ -73,14 +73,6 @@
         .tooltip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: var(--gray-300); color: white; border-radius: 50%; font-size: 11px; font-weight: 700; cursor: help; flex-shrink: 0; }
         .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 400; white-space: nowrap; max-width: 300px; white-space: normal; z-index: 100; box-shadow: var(--shadow); line-height: 1.4; }
         .tooltip:hover::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--gray-800); z-index: 100; }
-
-        /* Mode Toggle */
-        .mode-toggle { display: flex; gap: 0; margin-bottom: 24px; border-radius: 10px; overflow: hidden; border: 2px solid var(--primary); }
-        .mode-btn { flex: 1; padding: 14px 16px; text-align: center; cursor: pointer; font-weight: 700; font-size: 0.95em; transition: all 0.25s ease; background: white; color: var(--primary); border: none; }
-        .mode-btn.active { background: var(--primary); color: white; }
-        .mode-btn:hover:not(.active) { background: var(--primary-light); }
-        .mode-section { display: none; }
-        .mode-section.active { display: block; }
 
         /* Teikibin Form */
         .tb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -93,31 +85,19 @@
         .tb-section-title:first-child { margin-top: 0; }
         .tb-prefilled { background: var(--success-bg); border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 14px; font-size: 0.85em; color: #065F46; margin-bottom: 14px; }
 
-        /* File Upload */
-        .file-upload { border: 2px dashed var(--primary); border-radius: 10px; padding: 28px 20px; text-align: center; background: var(--primary-light); cursor: pointer; transition: all 0.3s; }
-        .file-upload:hover { background: #E0E7FF; border-color: var(--primary-dark); transform: translateY(-1px); }
-        .file-upload p { margin: 0; color: var(--primary); font-weight: 600; }
-        .file-upload .sub { color: var(--gray-500); font-size: 0.85em; margin-top: 4px; }
-        #fileStatus { margin-top: 8px; font-size: 0.9em; color: var(--success); font-weight: 600; }
-
         /* Primary Button */
-        .btn-primary { width: 100%; padding: 16px; font-size: 1.1em; font-weight: 700; color: white; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border: none; border-radius: var(--radius); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; letter-spacing: 0.02em; position: relative; overflow: hidden; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.35); }
-        .btn-primary:active { transform: translateY(0); }
-        .btn-primary::after { content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transition: left 0.5s; }
-        .btn-primary:hover::after { left: 100%; }
-        .btn-clear { padding: 12px 24px; font-size: 0.95em; font-weight: 700; color: var(--error); background: white; border: 2px solid var(--error); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
-        .btn-clear:hover { background: var(--error); color: white; }
-        .btn-save { padding: 12px 18px; font-size: 0.95em; font-weight: 700; color: #059669; background: white; border: 2px solid #059669; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
-        .btn-save:hover { background: #059669; color: white; }
-        .btn-load { padding: 12px 18px; font-size: 0.95em; font-weight: 700; color: #2563EB; background: white; border: 2px solid #2563EB; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
-        .btn-load:hover { background: #2563EB; color: white; }
-        .btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .btn-primary { width: 100%; padding: 14px 24px; font-size: 0.95em; font-weight: 700; color: white; background: var(--primary); border: none; border-radius: 10px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; box-shadow: 0 1px 3px rgba(79,70,229,0.3); }
+        .btn-primary:hover { background: #4338CA; box-shadow: 0 2px 6px rgba(79,70,229,0.4); }
+        .btn-primary:active { background: #3730A3; box-shadow: 0 1px 2px rgba(79,70,229,0.3); }
+        .data-toolbar { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+        .data-toolbar button { padding: 5px 12px; font-size: 0.78em; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.15s; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); line-height: 1.3; }
+        .data-toolbar button:hover { background: var(--gray-50); border-color: var(--gray-300); color: var(--gray-700); }
+        .data-toolbar .btn-clear { color: var(--gray-400); }
+        .data-toolbar .btn-clear:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
         .retirement-list { display: flex; flex-direction: column; gap: 6px; }
         .retirement-row { display: flex; align-items: center; gap: 6px; }
-        .retirement-row .row-num { font-size: 0.82em; color: var(--gray-400); min-width: 18px; text-align: right; }
         .retirement-row input[type="number"] { width: 100px; text-align: center; }
-        .retirement-row input[type="number"]:nth-of-type(2) { width: 72px; }
+        .retirement-row input[type="number"]:nth-of-type(2) { width: 80px; }
         .retirement-row span { color: var(--gray-500); font-size: 0.9em; }
         .retirement-row .remove-btn { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 1.1em; padding: 2px 6px; border-radius: 4px; width: auto; }
         .retirement-row .remove-btn:hover { color: var(--error); background: var(--error-bg); }
@@ -136,13 +116,15 @@
         .section-desc { color: var(--gray-500); font-size: 0.9em; margin: 0 0 16px; }
 
         /* Summary Cards */
-        .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
-        .summary-card { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; border-radius: var(--radius); padding: 20px; text-align: center; }
-        .summary-card.alt { background: linear-gradient(135deg, #059669 0%, #14b8a6 100%); }
-        .summary-card.warn { background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%); }
-        .summary-card .sc-label { font-size: 0.82em; opacity: 0.9; margin-bottom: 6px; font-weight: 600; }
-        .summary-card .sc-value { font-size: 1.6em; font-weight: 800; letter-spacing: -0.02em; }
-        .summary-card .sc-sub { font-size: 0.78em; opacity: 0.8; margin-top: 4px; }
+        .summary-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .summary-card { background: white; border-radius: var(--radius); padding: 14px 18px; border: 1px solid var(--gray-200); border-left: 4px solid var(--primary); text-align: left; }
+        .summary-card.alt { border-left-color: var(--success); }
+        .summary-card.warn { border-left-color: var(--warning); }
+        .summary-card .sc-label { font-size: 0.82em; color: var(--gray-700); margin-bottom: 4px; font-weight: 700; line-height: 1.4; }
+        .summary-card .sc-label-sub { font-size: 0.88em; font-weight: 500; color: var(--gray-400); }
+        .summary-card .sc-value { font-size: 1.25em; font-weight: 800; color: var(--gray-800); letter-spacing: -0.02em; }
+        .summary-card .sc-unit { font-size: 0.5em; font-weight: 600; color: var(--gray-400); }
+        .summary-card .sc-sub { font-size: 0.75em; color: var(--gray-500); margin-top: 2px; line-height: 1.3; }
 
         /* Matrix */
         .matrix-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--gray-200); margin-bottom: 12px; }
@@ -182,10 +164,10 @@
         .detail-item.success .label, .detail-item.success .value { color: white; }
 
         /* Tabs */
-        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--gray-200); flex-wrap: wrap; }
-        .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--gray-500); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-size: 0.95em; }
-        .tab:hover { color: var(--gray-700); }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tabs { display: inline-flex; gap: 4px; margin-bottom: 20px; background: var(--gray-100); border-radius: 12px; padding: 4px; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: var(--gray-500); border-radius: 10px; transition: all 0.25s; font-size: 0.92em; user-select: none; position: relative; }
+        .tab:hover { color: var(--gray-700); background: rgba(255,255,255,0.5); }
+        .tab.active { color: var(--primary); background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
@@ -321,16 +303,67 @@
         @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; }
-            .btn-primary, .file-upload, .tabs, .mode-toggle, .fy-toggle { display: none; }
+            .btn-primary, .data-toolbar, .tabs, .fy-toggle { display: none; }
             .tab-content { display: block !important; page-break-inside: avoid; }
         }
         @media (max-width: 640px) {
-            body { padding: 8px; }
-            .content { padding: 20px 16px; }
-            .app-header { padding: 24px 20px; }
-            .app-header h1 { font-size: 1.4em; }
-            .app-footer { padding: 16px 20px; }
-            .summary-bar { grid-template-columns: 1fr; }
+            html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+            body { padding: 0; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+            .container { border-radius: 0; max-width: none; }
+            .app-header { padding: 24px 16px; padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); }
+            .app-header h1 { font-size: 1.25em; }
+            .app-header .subtitle { font-size: 0.85em; }
+            .badge { font-size: 0.65em; padding: 3px 10px; margin-left: 6px; }
+            .header-meta { flex-wrap: wrap; gap: 8px; font-size: 0.75em; }
+            .content { padding: 16px; padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); }
+            .fy-toggle { padding: 12px 14px; gap: 8px; }
+            .fy-toggle select { width: 100%; font-size: 16px !important; min-height: 44px; }
+            .disclaimer { padding: 12px 14px; font-size: 0.82em; }
+            .form-grid { grid-template-columns: 1fr; gap: 16px; }
+            .card { padding: 16px; }
+            .card-title { font-size: 0.95em; }
+            input, select { font-size: 16px !important; min-height: 44px; touch-action: manipulation; }
+            .date-inputs { flex-wrap: wrap; }
+            .date-inputs input[placeholder="年"] { width: 90px; }
+            .date-inputs input[placeholder="月"], .date-inputs input[placeholder="日"] { width: 72px; }
+            .retirement-row input[type="number"] { width: 90px; min-height: 44px; }
+            .retirement-row input[type="number"]:nth-of-type(2) { width: 72px; }
+            .retirement-row .remove-btn { min-height: 44px; padding: 4px 8px; }
+            .add-retirement-btn { min-height: 44px; padding: 8px 14px; }
+            .tb-grid { grid-template-columns: 1fr; }
+            .tb-group input { font-size: 16px !important; min-height: 44px; }
+            .btn-primary { min-height: 48px; }
+            .data-toolbar button { min-height: 36px; padding: 4px 10px; font-size: 0.72em; }
+            .summary-bar { grid-template-columns: 1fr 1fr; }
+            .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; width: 100%; display: flex; }
+            .tab { padding: 10px 12px; font-size: 0.82em; white-space: nowrap; flex: 1; text-align: center; }
+            .matrix-wrap { -webkit-overflow-scrolling: touch; }
+            .matrix-table { font-size: 0.82em; }
+            .matrix-table th, .matrix-table td { padding: 8px 6px; }
+            .matrix-table td:first-child, .matrix-table th:first-child { min-width: 80px; }
+            .cell .monthly { font-size: 0.92em; }
+            .cell .annual { font-size: 0.72em; }
+            .cell .rate-diff { font-size: 0.65em; }
+            .detail-panel { padding: 14px 16px; }
+            .detail-panel h4 { font-size: 0.95em; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .chart-container { height: 300px; }
+            .chart-scenario-select select { font-size: 16px !important; min-height: 44px; }
+            .life-expect-info { flex-direction: column; }
+            .analysis-selector { padding: 14px; }
+            .analysis-selector-row { flex-direction: column; align-items: stretch; }
+            .analysis-selector-row label { min-width: auto; width: 100%; }
+            .analysis-selector-row select { width: 100%; font-size: 16px !important; min-height: 44px; }
+            .age-ym-pick { flex-wrap: wrap; }
+            .age-ym-pick input[type="number"] { font-size: 16px !important; min-height: 44px; }
+            .compare-grid { grid-template-columns: 1fr; }
+            .net-grid { grid-template-columns: 1fr; }
+            .np-payment-alert .np-detail { grid-template-columns: 1fr; }
+            .app-footer { padding: 16px; padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+            .app-footer .footer-grid { grid-template-columns: 1fr; }
+            .tooltip:active::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: auto; right: -10px; transform: none; background: var(--gray-800); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 400; white-space: normal; max-width: min(280px, calc(100vw - 32px)); z-index: 100; box-shadow: var(--shadow); line-height: 1.4; }
+            .tooltip:active::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: var(--gray-800); z-index: 100; }
+            .stat-row .label { white-space: normal; }
         }
     </style>
 </head>
@@ -353,6 +386,11 @@
                 <option value="R8" selected>令和8年度（2026年度）</option>
                 <option value="R7">令和7年度（2025年度）</option>
             </select>
+            <div class="data-toolbar">
+                <button onclick="saveData()">💾 データ保存</button>
+                <button onclick="loadData()">📂 データ読込</button>
+                <button class="btn-clear" onclick="allClear()">クリア</button>
+            </div>
             <span class="fy-note" id="fyNote">※ 令和8年度（2026年4月〜）の年金額改定・在職老齢年金改正を反映済み</span>
         </div>
 
@@ -374,15 +412,7 @@
 
         <div id="messageArea"></div>
 
-        <!-- Data Input Mode Toggle -->
-        <div class="mode-toggle">
-            <button class="mode-btn active" onclick="switchMode('teikibin')">📋 ねんきん定期便から入力（推奨）</button>
-            <button class="mode-btn" onclick="switchMode('excel')">📁 Excelファイルから計算</button>
-        </div>
-
-        <!-- Mode: ねんきん定期便 -->
-        <div id="mode-teikibin" class="mode-section active">
-            <div class="form-grid">
+        <div class="form-grid">
                 <div class="card">
                     <div class="card-title">👤 基本情報</div>
                     <div class="form-group">
@@ -398,11 +428,7 @@
                             <span class="tooltip" data-tip="複数のシナリオを比較できます。例: 2026年3月=来年退職、2033年7月=60歳退職">?</span>
                         </label>
                         <div class="retirement-list" id="retirementList1">
-                            <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2028"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2030"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2035"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
+                            <div class="retirement-row"><input type="number" placeholder="年"><span>年</span><input type="number" placeholder="月"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
                         </div>
                         <button class="add-retirement-btn" onclick="addRetRow('retirementList1')">＋ 退職シナリオを追加</button>
                         <input type="hidden" id="retirementDates">
@@ -478,55 +504,8 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Mode: Excel -->
-        <div id="mode-excel" class="mode-section">
-            <div class="form-grid">
-                <div class="card">
-                    <div class="card-title">👤 基本情報</div>
-                    <div class="form-group">
-                        <label>生年月日</label>
-                        <div class="date-inputs">
-                            <input type="number" id="birthYear2" placeholder="年" value="1975"><span>年</span>
-                            <input type="number" id="birthMonth2" placeholder="月" value="10"><span>月</span>
-                            <input type="number" id="birthDay2" placeholder="日" value="15"><span>日</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>退職年月（最大10個）</label>
-                        <div class="retirement-list" id="retirementList2">
-                            <div class="retirement-row"><span class="row-num">1</span><input type="number" placeholder="年" value="2026"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">2</span><input type="number" placeholder="年" value="2028"><span>年</span><input type="number" placeholder="月" value="3"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">3</span><input type="number" placeholder="年" value="2030"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">4</span><input type="number" placeholder="年" value="2033"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                            <div class="retirement-row"><span class="row-num">5</span><input type="number" placeholder="年" value="2035"><span>年</span><input type="number" placeholder="月" value="10"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button></div>
-                        </div>
-                        <button class="add-retirement-btn" onclick="addRetRow('retirementList2')">＋ 退職シナリオを追加</button>
-                        <input type="hidden" id="retirementDates2">
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-title">📁 年金記録データ（Excel）</div>
-                    <div class="file-upload" onclick="document.getElementById('salaryFile').click()">
-                        <input type="file" id="salaryFile" accept=".xlsx,.xls" style="display: none;">
-                        <p>📄 クリックしてExcelファイルを選択</p>
-                        <div class="sub">シート名「標準報酬月額」「標準賞与」を含むファイル</div>
-                        <div id="fileStatus"></div>
-                    </div>
-                    <p style="font-size:0.82em; color:var(--gray-500); margin-top:12px;">
-                        ※ Excelモードでは再評価率が適用されないため、ねんきん定期便モードの方が正確です。
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn-primary" style="flex:1" onclick="calculate()">🧮 年金を計算する</button>
-            <button class="btn-save" onclick="saveData()">💾 保存</button>
-            <button class="btn-load" onclick="loadData()">📂 読込</button>
-            <button class="btn-clear" onclick="allClear()">🗑️ オールクリア</button>
-        </div>
+        <button class="btn-primary" onclick="calculate()">🧮 年金を計算する</button>
 
         <div id="results" class="results-section hidden">
             <!-- Summary Bar -->
@@ -625,7 +604,6 @@
     </footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <script>
@@ -674,10 +652,8 @@ const CONSTANTS = {
 };
 
 let C = CONSTANTS.R8;
-let salaryData = [];
 let lastMatrixData = null;
 let cumulativeChart = null;
-let currentMode = 'teikibin';
 
 // ===========================
 // データ保存・読込
@@ -686,7 +662,6 @@ function saveData() {
     const data = {
         version: '1.0',
         savedAt: new Date().toISOString(),
-        mode: currentMode,
         teikibin: {
             birthYear: document.getElementById('birthYear').value,
             birthMonth: document.getElementById('birthMonth').value,
@@ -702,13 +677,6 @@ function saveData() {
             tb_dataMonth: document.getElementById('tb_dataMonth').value,
             tb_totalPaid: document.getElementById('tb_totalPaid').value,
             retirementDates: getRetirementDatesFromList('retirementList1')
-        },
-        excel: {
-            birthYear2: document.getElementById('birthYear2').value,
-            birthMonth2: document.getElementById('birthMonth2').value,
-            birthDay2: document.getElementById('birthDay2').value,
-            retirementDates: getRetirementDatesFromList('retirementList2'),
-            salaryData: salaryData
         }
     };
     const json = JSON.stringify(data, null, 2);
@@ -753,25 +721,6 @@ function loadData() {
                     }
                 }
 
-                // Excelモードデータの復元
-                const ex = data.excel;
-                if (ex) {
-                    ['birthYear2','birthMonth2','birthDay2'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el && ex[id] !== undefined && ex[id] !== '') el.value = ex[id];
-                    });
-                    if (ex.retirementDates && ex.retirementDates.length > 0) {
-                        setRetirementDates('retirementList2', ex.retirementDates);
-                    }
-                    if (ex.salaryData && ex.salaryData.length > 0) {
-                        salaryData = ex.salaryData;
-                        document.getElementById('fileStatus').textContent = `✅ ${salaryData.length}行の給与データを復元`;
-                    }
-                }
-
-                // 保存時のモードに切替
-                if (data.mode) switchMode(data.mode);
-
                 const savedDate = data.savedAt ? new Date(data.savedAt).toLocaleString('ja-JP') : '';
                 showMessage(`📂 データを読み込みました${savedDate ? '（保存日時: ' + savedDate + '）' : ''}`, 'success');
             } catch (err) {
@@ -790,15 +739,15 @@ function setRetirementDates(listId, dates) {
     dates.forEach((d, i) => {
         const row = document.createElement('div');
         row.className = 'retirement-row';
-        row.innerHTML = `<span class="row-num">${i + 1}</span><input type="number" placeholder="年" value="${d.year}"><span>年</span><input type="number" placeholder="月" value="${d.month}"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
+        row.innerHTML = `<input type="number" placeholder="年" value="${d.year}"><span>年</span><input type="number" placeholder="月" value="${d.month}"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
         list.appendChild(row);
     });
 }
 
 function allClear() {
     if (!confirm('すべての入力値をクリアしますか？')) return;
-    ['birthYear','birthMonth','birthDay','tb_npBase','tb_epBase','tb_transBase','tb_epMonths','tb_npMonths','tb_salary','tb_bonus','tb_dataYear','tb_dataMonth','tb_totalPaid','birthYear2','birthMonth2','birthDay2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    ['retirementDates','retirementDates2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['birthYear','birthMonth','birthDay','tb_npBase','tb_epBase','tb_transBase','tb_epMonths','tb_npMonths','tb_salary','tb_bonus','tb_dataYear','tb_dataMonth','tb_totalPaid'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    const retHidden = document.getElementById('retirementDates'); if (retHidden) retHidden.value = '';
     // 退職年月の個別入力もクリア
     document.querySelectorAll('.retirement-row input').forEach(el => el.value = '');
     // 詳細分析の年月入力をクリア
@@ -817,9 +766,8 @@ function allClear() {
     });
     document.getElementById('results').classList.add('hidden');
     document.getElementById('messageArea').innerHTML = '';
-    document.getElementById('fileStatus').textContent = '';
     if (cumulativeChart) { cumulativeChart.destroy(); cumulativeChart = null; }
-    salaryData = []; lastMatrixData = null;
+    lastMatrixData = null;
 }
 
 // ===========================
@@ -828,10 +776,9 @@ function allClear() {
 function addRetRow(listId) {
     const list = document.getElementById(listId);
     if (list.children.length >= 10) { alert('退職シナリオは最大10個です'); return; }
-    const num = list.children.length + 1;
     const row = document.createElement('div');
     row.className = 'retirement-row';
-    row.innerHTML = `<span class="row-num">${num}</span><input type="number" placeholder="年"><span>年</span><input type="number" placeholder="月"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
+    row.innerHTML = `<input type="number" placeholder="年" value="${new Date().getFullYear()}"><span>年</span><input type="number" placeholder="月"><span>月</span><button class="remove-btn" onclick="removeRetRow(this)" title="削除">&times;</button>`;
     list.appendChild(row);
 }
 function removeRetRow(btn) {
@@ -841,7 +788,7 @@ function removeRetRow(btn) {
     renumberRetRows(list);
 }
 function renumberRetRows(list) {
-    Array.from(list.children).forEach((row, i) => { row.querySelector('.row-num').textContent = i + 1; });
+    // row numbers removed
 }
 function getRetirementDatesFromList(listId) {
     const list = document.getElementById(listId);
@@ -874,6 +821,12 @@ function fixYearMonth(monthInput) {
 }
 // イベント委譲で全退職年月の月入力を監視
 document.addEventListener('DOMContentLoaded', () => {
+    // 退職年月の年デフォルトを現在年に設定
+    const currentYear = new Date().getFullYear();
+    document.querySelectorAll('.retirement-row input[placeholder="年"]').forEach(input => {
+        if (!input.value) input.value = currentYear;
+    });
+
     document.addEventListener('change', e => {
         const el = e.target;
         if (el.type !== 'number') return;
@@ -943,17 +896,8 @@ function estimateNetPension(annualGross) {
 }
 
 // ===========================
-// モード切替 & タブ制御
+// タブ制御
 // ===========================
-function switchMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('.mode-btn').forEach((b, i) => {
-        b.classList.toggle('active', (i === 0 && mode === 'teikibin') || (i === 1 && mode === 'excel'));
-    });
-    document.getElementById('mode-teikibin').classList.toggle('active', mode === 'teikibin');
-    document.getElementById('mode-excel').classList.toggle('active', mode === 'excel');
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -966,48 +910,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-// ===========================
-// ファイル読み込み (Excel)
-// ===========================
-document.getElementById('salaryFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    document.getElementById('fileStatus').textContent = `✅ ${file.name}`;
-    showMessage('ファイルを読み込み中...', 'loading');
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        try {
-            const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-            salaryData = processExcelSheets(wb);
-            if (salaryData.length === 0) throw new Error('有効なデータがありません');
-            showMessage(`✅ ${salaryData.length}件のデータを読み込みました`, 'success');
-        } catch (err) { showMessage('❌ ' + err.message, 'error'); salaryData = []; }
-    };
-    reader.readAsArrayBuffer(file);
-});
-
-function processExcelSheets(wb) {
-    const ss = '標準報酬月額', bs = '標準賞与';
-    if (!wb.SheetNames.includes(ss)) throw new Error(`シート「${ss}」が見つかりません`);
-    const sr = XLSX.utils.sheet_to_json(wb.Sheets[ss], { header: 1 });
-    const br = wb.SheetNames.includes(bs) ? XLSX.utils.sheet_to_json(wb.Sheets[bs], { header: 1 }) : [];
-    const dm = new Map();
-    for (let i = 1; i < sr.length; i++) {
-        const r = sr[i]; if (!r || r.length < 3) continue;
-        const [y, m, s] = [parseInt(r[0]), parseInt(r[1]), parseInt(String(r[2]).replace(/[^\d]/g, ''))];
-        if (y && m && s > 0) dm.set(`${y}-${m}`, { year: y, month: m, salary: s, bonus: 0 });
-    }
-    for (let i = 1; i < br.length; i++) {
-        const r = br[i]; if (!r || r.length < 3) continue;
-        const [y, m, b] = [parseInt(r[0]), parseInt(r[1]), parseInt(String(r[2]).replace(/[^\d]/g, ''))];
-        if (y && m && b > 0) {
-            const cap = Math.min(b, C.BONUS_CAP), k = `${y}-${m}`;
-            if (dm.has(k)) dm.get(k).bonus += cap; else dm.set(k, { year: y, month: m, salary: 0, bonus: cap });
-        }
-    }
-    return Array.from(dm.values()).sort((a, b) => a.year - b.year || a.month - b.month);
-}
 
 // ===========================
 // 共通: シナリオパース & 年金率計算
@@ -1038,8 +940,7 @@ function buildPensions(epBase65, npBase65, transBase65, decreaseRate, maxDeferAg
 // ===========================
 function calculate() {
     try {
-        if (currentMode === 'teikibin') calculateFromTeikibin();
-        else calculateFromExcel();
+        calculateFromTeikibin();
     } catch (err) { showMessage('❌ ' + err.message, 'error'); console.error(err); }
 }
 
@@ -1076,6 +977,11 @@ function calculateFromTeikibin() {
     const maxDeferAge = getMaxDeferralAge(birthdate);
     const matrixData = [];
 
+    console.group('📊 年金計算デバッグ');
+    console.log('入力値:', { tbEp, tbNp, tbTrans, tbEpMonths, tbNpMonths, tbSalary, tbBonus, tbDataYear, tbDataMonth });
+    console.log('共通計算:', { dataDate: `${tbDataYear}/${tbDataMonth}`, age60: `${birthdate.getFullYear()+60}/${birthdate.getMonth()+1}`, monthsDataTo60, monthlyRemuneration: Math.round(monthlyRemuneration), epAccrualPerMonth: Math.round(epAccrualPerMonth) });
+    console.log('定期便65歳合計:', tbEp + tbNp + tbTrans);
+
     scenarios.forEach(sc => {
         const retDate = new Date(sc.year, sc.month - 1, 1);
         const monthsDataToRetire = Math.max(0, monthDiff(dataDate, retDate));
@@ -1096,6 +1002,7 @@ function calculateFromTeikibin() {
         }
 
         const { pensions, base65 } = buildPensions(adjEp, adjNp, adjTrans, decreaseRate, maxDeferAge);
+        console.log(`${sc.year}/${sc.month}退職:`, { monthsDataToRetire, shortfall, adjEp: Math.round(adjEp), adjNp, adjTrans: Math.round(adjTrans), base65: Math.round(base65), '定期便との差': Math.round(base65 - (tbEp + tbNp + tbTrans)) });
         const epMonthsAtRetire = tbEpMonths + monthsDataToRetire;
 
         const analysis = {
@@ -1127,95 +1034,10 @@ function calculateFromTeikibin() {
     displayMatrix(matrixData);
     displayAnalyses(matrixData, birthdate);
     populateChartSelector(matrixData);
-    showMessage(`✅ 計算完了！（ねんきん定期便モード・${C.label}基準）`, 'success');
+    console.groupEnd();
+    showMessage(`✅ 計算完了！（${C.label}基準）`, 'success');
     document.getElementById('results').classList.remove('hidden');
 }
-
-function calculateFromExcel() {
-    if (salaryData.length === 0) throw new Error('給与データをアップロードしてください');
-    const birthYear = parseInt(document.getElementById('birthYear2').value);
-    const birthMonth = parseInt(document.getElementById('birthMonth2').value);
-    const birthDay = parseInt(document.getElementById('birthDay2').value);
-    if (!birthYear || !birthMonth || !birthDay) throw new Error('基本情報を入力してください');
-
-    const birthdate = new Date(birthYear, birthMonth - 1, birthDay);
-    const scenarios = getRetirementDatesFromList('retirementList2');
-    if (scenarios.length === 0) throw new Error('有効な退職年月を入力してください');
-
-    const decreaseRate = getDecreaseRate(birthdate);
-    const maxDeferAge = getMaxDeferralAge(birthdate);
-    const matrixData = [];
-
-    scenarios.forEach(sc => {
-        const retDate = new Date(sc.year, sc.month - 1, 1);
-        const valid = salaryData.filter(item => new Date(item.year, item.month - 1, 1) < retDate);
-        if (valid.length === 0) { matrixData.push({ year: sc.year, month: sc.month, error: true }); return; }
-
-        const analysis = analyzeData(valid, birthdate, retDate);
-        analysis.mode = 'excel';
-        const epBase = calcEP(analysis);
-        const npBase = getNpFull(birthdate) * (analysis.basicPensionMonths / C.NP_MAX_MONTHS);
-        const unit = getTransUnit(birthdate);
-        const transAdd = Math.max(0, unit * Math.min(analysis.totalEmployeeMonths, C.TRANS_MAX_MONTHS)
-            - getNpFull(birthdate) * (analysis.epMonths20to60 / C.NP_MAX_MONTHS));
-
-        const { pensions, base65 } = buildPensions(epBase, npBase, transAdd, decreaseRate, maxDeferAge);
-        matrixData.push({ year: sc.year, month: sc.month, epBase, npBase, transAdd, base65, analysis, pensions, decreaseRate, maxDeferAge });
-    });
-
-    lastMatrixData = matrixData;
-
-    // 60歳退職前提のサマリー用データを計算
-    const age60 = new Date(birthYear + 60, birthMonth - 1, 1);
-    const age60Year = age60.getFullYear(), age60Month = age60.getMonth() + 1;
-    const valid60 = salaryData.filter(item => new Date(item.year, item.month - 1, 1) < age60);
-    if (valid60.length > 0) {
-        const analysis60 = analyzeData(valid60, birthdate, age60);
-        analysis60.mode = 'excel';
-        const epBase60 = calcEP(analysis60);
-        const npBase60 = getNpFull(birthdate) * (analysis60.basicPensionMonths / C.NP_MAX_MONTHS);
-        const unit60 = getTransUnit(birthdate);
-        const transAdd60 = Math.max(0, unit60 * Math.min(analysis60.totalEmployeeMonths, C.TRANS_MAX_MONTHS)
-            - getNpFull(birthdate) * (analysis60.epMonths20to60 / C.NP_MAX_MONTHS));
-        const { pensions: sumPensions, base65: sumBase65 } = buildPensions(epBase60, npBase60, transAdd60, decreaseRate, maxDeferAge);
-        displaySummary({ pensions: sumPensions, base65: sumBase65, year: age60Year, month: age60Month }, birthdate);
-    } else {
-        displaySummary(null, birthdate);
-    }
-
-    displayMatrix(matrixData);
-    displayAnalyses(matrixData, birthdate);
-    populateChartSelector(matrixData);
-    showMessage(`✅ 計算完了！（Excelモード ※再評価率未適用・${C.label}基準）`, 'success');
-    document.getElementById('results').classList.remove('hidden');
-}
-
-function analyzeData(data, birthdate, retDate) {
-    const age20 = new Date(birthdate.getFullYear() + 20, birthdate.getMonth(), 1);
-    const age60 = new Date(birthdate.getFullYear() + 60, birthdate.getMonth(), 1);
-    let mB = 0, mA = 0, sB = 0, sA = 0, bA = 0, tc = 0, ep2060 = 0;
-    data.forEach(item => {
-        const d = new Date(item.year, item.month - 1, 1);
-        tc += (item.salary + item.bonus) * C.EP_RATE_SELF;
-        if (d >= age20 && d < age60) ep2060++;
-        if (item.salary > 0) { if (d < C.H15_APRIL) { mB++; sB += item.salary; } else { mA++; sA += item.salary; } }
-        if (d >= C.H15_APRIL) bA += item.bonus;
-    });
-    let fnp = 0;
-    if (retDate < age60) fnp = Math.max(0, monthDiff(retDate, age60));
-    return {
-        totalEmployeeMonths: mB + mA, epMonths20to60: ep2060,
-        basicPensionMonths: Math.min(ep2060 + fnp, C.NP_MAX_MONTHS),
-        futureNpMonths: fnp, totalContributions: tc,
-        start: data.length > 0 ? new Date(data[0].year, data[0].month - 1, 1) : null,
-        end: new Date(retDate.getFullYear(), retDate.getMonth() - 1, 1),
-        monthsBefore: mB, monthsAfter: mA,
-        avgBefore: mB > 0 ? Math.round(sB / mB) : 0,
-        avgAfter: mA > 0 ? Math.round((sA + bA) / mA) : 0
-    };
-}
-
-function calcEP(a) { return a.avgBefore * C.RATE_BEFORE_2003 * a.monthsBefore + a.avgAfter * C.RATE_AFTER_2003 * a.monthsAfter; }
 
 // ===========================
 // サマリーバー表示
@@ -1237,30 +1059,37 @@ function displaySummary(summaryData, birthdate) {
     if (p65) {
         const net = estimateNetPension(p65.total);
         html += `<div class="summary-card">
-            <div class="sc-label">65歳受給（60歳退職前提・${retLabel}）</div>
-            <div class="sc-value">${fmtYen(Math.round(p65.total / 12))}<span style="font-size:0.5em">/月</span></div>
-            <div class="sc-sub">年額 ${fmtYen(Math.round(p65.total))}｜手取概算 月${fmtYen(Math.round(net.net / 12))}</div>
+            <div class="sc-label">65歳受給<br><span class="sc-label-sub">60歳退職前提・${retLabel}</span></div>
+            <div class="sc-value">${fmtYen(Math.round(p65.total / 12))}<span class="sc-unit">/月</span></div>
+            <div class="sc-sub">年額 ${fmtYen(Math.round(p65.total))}</div>
+            <div class="sc-sub">手取概算 月${fmtYen(Math.round(net.net / 12))}</div>
         </div>`;
     }
     if (p60) {
+        const net60 = estimateNetPension(p60.total);
         html += `<div class="summary-card warn">
-            <div class="sc-label">60歳繰上げ（${((1-p60.rate)*100).toFixed(1)}%減額）</div>
-            <div class="sc-value">${fmtYen(Math.round(p60.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-label">60歳繰上げ<br><span class="sc-label-sub">${((1-p60.rate)*100).toFixed(1)}%減額</span></div>
+            <div class="sc-value">${fmtYen(Math.round(p60.total / 12))}<span class="sc-unit">/月</span></div>
             <div class="sc-sub">年額 ${fmtYen(Math.round(p60.total))}</div>
+            <div class="sc-sub">手取概算 月${fmtYen(Math.round(net60.net / 12))}</div>
         </div>`;
     }
     if (p70) {
+        const net70 = estimateNetPension(p70.total);
         html += `<div class="summary-card alt">
-            <div class="sc-label">70歳繰下げ（+${((p70.rate-1)*100).toFixed(1)}%増額）</div>
-            <div class="sc-value">${fmtYen(Math.round(p70.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-label">70歳繰下げ<br><span class="sc-label-sub">+${((p70.rate-1)*100).toFixed(1)}%増額</span></div>
+            <div class="sc-value">${fmtYen(Math.round(p70.total / 12))}<span class="sc-unit">/月</span></div>
             <div class="sc-sub">年額 ${fmtYen(Math.round(p70.total))}</div>
+            <div class="sc-sub">手取概算 月${fmtYen(Math.round(net70.net / 12))}</div>
         </div>`;
     }
     if (p75) {
+        const net75 = estimateNetPension(p75.total);
         html += `<div class="summary-card alt">
-            <div class="sc-label">75歳繰下げ（+84.0%増額）</div>
-            <div class="sc-value">${fmtYen(Math.round(p75.total / 12))}<span style="font-size:0.5em">/月</span></div>
+            <div class="sc-label">75歳繰下げ<br><span class="sc-label-sub">+84.0%増額</span></div>
+            <div class="sc-value">${fmtYen(Math.round(p75.total / 12))}<span class="sc-unit">/月</span></div>
             <div class="sc-sub">年額 ${fmtYen(Math.round(p75.total))}</div>
+            <div class="sc-sub">手取概算 月${fmtYen(Math.round(net75.net / 12))}</div>
         </div>`;
     }
     bar.innerHTML = html;
@@ -1343,7 +1172,7 @@ function showCellDetail(ri, age) {
 
     let npHtml = '';
     if (npCost > 0) {
-        npHtml = `<div class="detail-item" style="background:var(--warning-bg);"><span class="label" style="color:#92400E;">国年保険料（退職〜60歳・${npMonths}ヶ月）</span><span class="value" style="color:#DC2626;">${fmtYen(npCost)}</span></div>`;
+        npHtml = `<div class="detail-item" style="background:var(--warning-bg);"><span class="label" style="color:#92400E;">国年保険料<br><span style="font-size:0.88em;font-weight:500;color:#B45309;">退職〜60歳・${npMonths}ヶ月</span></span><span class="value" style="color:#DC2626;">${fmtYen(npCost)}</span></div>`;
     }
 
     panel.innerHTML = `
@@ -1477,8 +1306,8 @@ function renderCumulativeChart(d) {
 
     // 基本アノテーション
     const annotations = {
-        maleLine: { type: 'line', xMin: 81.5, xMax: 81.5, borderColor: 'rgba(239,68,68,0.4)', borderWidth: 2, borderDash: [6, 4], label: { display: true, content: '男性平均寿命 81.5歳', position: 'start', font: { size: 10 }, backgroundColor: 'rgba(239,68,68,0.7)' } },
-        femaleLine: { type: 'line', xMin: 87.6, xMax: 87.6, borderColor: 'rgba(236,72,153,0.4)', borderWidth: 2, borderDash: [6, 4], label: { display: true, content: '女性平均寿命 87.6歳', position: 'start', font: { size: 10 }, backgroundColor: 'rgba(236,72,153,0.7)' } }
+        maleLine: { type: 'line', xMin: 81.5, xMax: 81.5, borderColor: 'rgba(239,68,68,0.5)', borderWidth: 2, borderDash: [6, 4] },
+        femaleLine: { type: 'line', xMin: 87.6, xMax: 87.6, borderColor: 'rgba(236,72,153,0.5)', borderWidth: 2, borderDash: [6, 4] }
     };
 
     // 選択された2つの年齢間の損益分岐点
@@ -1652,7 +1481,7 @@ function renderAnalysisComparison(d, entries) {
         const npCost = a.futureNpMonths * C.NP_MONTHLY_PAYMENT;
         const retAgeInfo = birthdate ? calcAgeFromDate(birthdate, d.year, d.month) : null;
         const retAgeLabel = retAgeInfo ? `${retAgeInfo.ageY}歳${retAgeInfo.ageM > 0 ? retAgeInfo.ageM + 'ヶ月' : ''}` : '';
-        html += `<div class="stat-row" style="background:var(--warning-bg);margin:0 -20px;padding:10px 20px;"><span class="label" style="color:#92400E;">⚠️ 国年保険料（退職${retAgeLabel}〜60歳・${a.futureNpMonths}ヶ月）</span><span class="value" style="color:#DC2626;">${fmtYen(C.NP_MONTHLY_PAYMENT)}/月 × ${a.futureNpMonths} = ${fmtYen(npCost)}</span></div>`;
+        html += `<div class="stat-row" style="background:var(--warning-bg);margin:0 -20px;padding:10px 20px;"><span class="label" style="color:#92400E;">⚠️ 国年保険料<br><span style="font-size:0.88em;font-weight:500;color:#B45309;">退職${retAgeLabel}〜60歳・${a.futureNpMonths}ヶ月</span></span><span class="value" style="color:#DC2626;">${fmtYen(C.NP_MONTHLY_PAYMENT)}/月<br><span style="font-size:0.9em;">× ${a.futureNpMonths} = ${fmtYen(npCost)}</span></span></div>`;
     }
     html += `</div></div>`;
 
